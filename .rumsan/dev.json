@@ -1,0 +1,22 @@
+{
+  "servers": [
+    {
+      "id": "lcvf8hkw",
+      "command": "pnpm run demo:api",
+      "port": 4082,
+      "subdomain": "api-sahakari"
+    },
+    {
+      "id": "mm6orcil",
+      "command": "pnpm run demo:pwa",
+      "port": 4080,
+      "subdomain": "sahakari"
+    },
+    {
+      "id": "hhsq09v3",
+      "command": "pnpm run demo:web",
+      "port": 4081,
+      "subdomain": "sahakari-admin"
+    }
+  ]
+}

@@ -6,6 +6,7 @@
     "dev": "vite dev --port 5174",
     "build": "vite build",
     "preview": "vite preview",
+    "demo": "pnpm build && vite preview --port 4080",
     "deploy": "pnpm build && wrangler pages deploy dist",
     "lint": "eslint",
     "format": "prettier"

@@ -74,7 +74,7 @@ const config = defineConfig(() => {
 
   return {
     plugins,
-    server: { host: "0.0.0.0", allowedHosts: ["vibecoder"] },
+    server: { host: "0.0.0.0", allowedHosts: ["vibecoder", "sahakari.rumsan.xyz"] },
   };
 });
 

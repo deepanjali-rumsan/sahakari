@@ -2,7 +2,7 @@
   "name": "create-t3-turbo",
   "private": true,
   "engines": {
-    "node": "^23.7.0",
+    "node": "^24.14.1",
     "pnpm": "^10.19.0"
   },
   "packageManager": "pnpm@10.19.0",
@@ -16,6 +16,9 @@
     "dev:api": "pnpm --filter api dev",
     "dev:pwa": "pnpm --filter pwa dev",
     "dev:web": "pnpm --filter web dev",
+    "demo:api": "pnpm --filter api demo",
+    "demo:pwa": "pnpm --filter pwa demo",
+    "demo:web": "pnpm --filter web demo",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",
     "format:fix": "turbo run format --continue -- --write --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",

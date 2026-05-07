@@ -1,4 +1,9 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useMatches,
+} from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Eye, CreditCard } from 'lucide-react'
@@ -14,6 +19,9 @@ function getToken() {
 }
 
 function LoansPage() {
+  const matches = useMatches()
+  const isChildActive = matches[matches.length - 1]?.routeId !== '/_app/loans'
+
   const token = getToken()
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -30,6 +38,9 @@ function LoansPage() {
     },
     enabled: !!token,
   })
+
+  // If a child route is active (like /$id), render it instead
+  if (isChildActive) return <Outlet />
 
   const loans = data?.data ?? []
 

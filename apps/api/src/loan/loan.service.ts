@@ -25,6 +25,20 @@ export class LoanService {
     return `SAH-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   }
 
+  private sanitizeNumericFields(data: any): any {
+    const numericFields = ['loanAmount', 'guaranteeAmount', 'age'];
+    const sanitized = { ...data };
+
+    numericFields.forEach((field) => {
+      if (sanitized[field] && typeof sanitized[field] === 'string') {
+        const parsed = parseFloat(sanitized[field]);
+        sanitized[field] = isNaN(parsed) ? null : parsed;
+      }
+    });
+
+    return sanitized;
+  }
+
   async listMine(userId: string) {
     return this.prisma.loanApplication.findMany({
       where: { userId },
@@ -58,7 +72,11 @@ export class LoanService {
       where: { id },
     });
     if (!loan || loan.userId !== userId) throw new ForbiddenException();
-    return this.prisma.loanApplication.update({ where: { id }, data });
+    const sanitizedData = this.sanitizeNumericFields(data);
+    return this.prisma.loanApplication.update({
+      where: { id },
+      data: sanitizedData,
+    });
   }
 
   async updateLoanDetails(
@@ -70,7 +88,11 @@ export class LoanService {
       where: { id },
     });
     if (!loan || loan.userId !== userId) throw new ForbiddenException();
-    return this.prisma.loanApplication.update({ where: { id }, data });
+    const sanitizedData = this.sanitizeNumericFields(data);
+    return this.prisma.loanApplication.update({
+      where: { id },
+      data: sanitizedData,
+    });
   }
 
   async updateAddress(
@@ -82,7 +104,11 @@ export class LoanService {
       where: { id },
     });
     if (!loan || loan.userId !== userId) throw new ForbiddenException();
-    return this.prisma.loanApplication.update({ where: { id }, data });
+    const sanitizedData = this.sanitizeNumericFields(data);
+    return this.prisma.loanApplication.update({
+      where: { id },
+      data: sanitizedData,
+    });
   }
 
   async updateTermsGuarantor(
@@ -94,7 +120,11 @@ export class LoanService {
       where: { id },
     });
     if (!loan || loan.userId !== userId) throw new ForbiddenException();
-    return this.prisma.loanApplication.update({ where: { id }, data });
+    const sanitizedData = this.sanitizeNumericFields(data);
+    return this.prisma.loanApplication.update({
+      where: { id },
+      data: sanitizedData,
+    });
   }
 
   async updateDocuments(
@@ -106,7 +136,11 @@ export class LoanService {
       where: { id },
     });
     if (!loan || loan.userId !== userId) throw new ForbiddenException();
-    return this.prisma.loanApplication.update({ where: { id }, data });
+    const sanitizedData = this.sanitizeNumericFields(data);
+    return this.prisma.loanApplication.update({
+      where: { id },
+      data: sanitizedData,
+    });
   }
 
   async submit(userId: string, id: string) {

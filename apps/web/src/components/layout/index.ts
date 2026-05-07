@@ -1,4 +1,6 @@
 export { AppShell } from './app-shell'
 export { IconSidebar } from './icon-sidebar'
+export { ExpandableSidebar } from './expandable-sidebar'
 export type { AppShellProps } from './app-shell'
 export type { IconSidebarProps, SidebarNavItem } from './icon-sidebar'
+export type { ExpandableSidebarProps } from './expandable-sidebar'

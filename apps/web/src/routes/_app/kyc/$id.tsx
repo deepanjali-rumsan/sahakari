@@ -116,7 +116,9 @@ function KycDetailPage() {
           <div>
             <span className="text-xs text-gray-400 block">Cooperative</span>
             <span className="text-sm font-medium">
-              {kyc.user?.cooperative ?? '—'}
+              {typeof kyc.user?.cooperative === 'string'
+                ? kyc.user.cooperative
+                : (kyc.user?.cooperative?.name ?? '—')}
             </span>
           </div>
           <div>
@@ -148,7 +150,10 @@ function KycDetailPage() {
               ['Full Name (NP)', kyc.fullNameNp],
               ['Passbook No.', kyc.passbookNo],
               ['Member Type', kyc.memberType],
-              ['Date of Birth', kyc.dob ? new Date(kyc.dob).toLocaleDateString() : null],
+              [
+                'Date of Birth',
+                kyc.dob ? new Date(kyc.dob).toLocaleDateString() : null,
+              ],
               ['Gender', kyc.gender],
               ['Nationality', kyc.nationality],
               ['Religion', kyc.religion],
@@ -181,10 +186,20 @@ function KycDetailPage() {
                 {[
                   ['Citizenship No.', kyc.citizenshipNumber],
                   ['Citizenship Issue District', kyc.citizenshipIssuedDistrict],
-                  ['Citizenship Issue Date', kyc.citizenshipIssuedDate ? new Date(kyc.citizenshipIssuedDate).toLocaleDateString() : null],
+                  [
+                    'Citizenship Issue Date',
+                    kyc.citizenshipIssuedDate
+                      ? new Date(kyc.citizenshipIssuedDate).toLocaleDateString()
+                      : null,
+                  ],
                   ['NIN ID Number', kyc.ninIdNumber],
                   ['NIN Issue District', kyc.ninIssuedDistrict],
-                  ['NIN Issue Date', kyc.ninIssuedDate ? new Date(kyc.ninIssuedDate).toLocaleDateString() : null],
+                  [
+                    'NIN Issue Date',
+                    kyc.ninIssuedDate
+                      ? new Date(kyc.ninIssuedDate).toLocaleDateString()
+                      : null,
+                  ],
                   ['Monthly Income', kyc.monthlyIncome],
                 ].map(([label, value]) =>
                   value ? (
@@ -208,7 +223,12 @@ function KycDetailPage() {
                   ['Nominee Relation', kyc.nomineeRelation],
                   ['Nominee Phone', kyc.nomineeContactNumber],
                   ['Nominee Address', kyc.nomineeAddress],
-                  ['Nominee DOB', kyc.nomineeDob ? new Date(kyc.nomineeDob).toLocaleDateString() : null],
+                  [
+                    'Nominee DOB',
+                    kyc.nomineeDob
+                      ? new Date(kyc.nomineeDob).toLocaleDateString()
+                      : null,
+                  ],
                 ].map(([label, value]) =>
                   value ? (
                     <div key={label}>
@@ -308,14 +328,20 @@ function KycDetailPage() {
       {kyc.status === 'PENDING' || kyc.status === 'UNDER_REVIEW' ? (
         <div className="flex gap-3">
           <button
-            onClick={() => { setReviewError(null); reviewMutation.mutate({ action: 'APPROVED' }) }}
+            onClick={() => {
+              setReviewError(null)
+              reviewMutation.mutate({ action: 'APPROVED' })
+            }}
             disabled={reviewMutation.isPending}
             className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
           >
             <CheckCircle2 size={16} /> Approve
           </button>
           <button
-            onClick={() => { setReviewError(null); setShowRejectModal(true) }}
+            onClick={() => {
+              setReviewError(null)
+              setShowRejectModal(true)
+            }}
             disabled={reviewMutation.isPending}
             className="flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
           >

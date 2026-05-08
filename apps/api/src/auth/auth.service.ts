@@ -41,12 +41,28 @@ export class AuthService {
       );
     }
 
+    let cooperativeId = dto.cooperativeId;
+    if (!cooperativeId) {
+      const cooperative = await this.prisma.cooperative.findUnique({
+        where: { name: dto.cooperative.trim() },
+        select: { id: true },
+      });
+
+      if (!cooperative) {
+        throw new BadRequestException(
+          'Cooperative not found. Please enter a valid cooperative name.',
+        );
+      }
+
+      cooperativeId = cooperative.id;
+    }
+
     const hashed = await bcrypt.hash(dto.password, 12);
     const user = await this.prisma.user.create({
       data: {
         phone: dto.phone,
         fullName: dto.fullName,
-        cooperative: dto.cooperative,
+        cooperativeId,
         passbookNumber: dto.passbookNumber,
         password: hashed,
       },

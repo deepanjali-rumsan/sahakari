@@ -87,7 +87,9 @@ function CustomersPage() {
                     {user.phone}
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600">
-                    {user.cooperative}
+                    {typeof user.cooperative === 'string'
+                      ? user.cooperative
+                      : (user.cooperative?.name ?? '—')}
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600 font-mono">
                     {user.passbookNumber}

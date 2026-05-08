@@ -1,4 +1,10 @@
-import { IsString, IsEmail, MinLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  MinLength,
+  Matches,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -10,9 +16,20 @@ export class RegisterDto {
   @IsString()
   fullName!: string;
 
-  @ApiProperty({ example: 'Chandragiri Saving & Credit Cooperatives Limited' })
+  @ApiProperty({
+    example: 'Chandragiri Saving & Credit',
+    description: 'Cooperative name',
+  })
   @IsString()
   cooperative!: string;
+
+  @ApiPropertyOptional({
+    example: 'cmovdo2j40004vthkk4xcltqr',
+    description: 'Cooperative ID (optional override)',
+  })
+  @IsOptional()
+  @IsString()
+  cooperativeId?: string;
 
   @ApiProperty({ example: 'PASS1' })
   @IsString()

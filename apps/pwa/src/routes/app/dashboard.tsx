@@ -83,6 +83,10 @@ function DashboardPage() {
   });
 
   const user = JSON.parse(getStorageItem("user") ?? "{}");
+  const cooperativeName =
+    typeof user.cooperative === "string"
+      ? user.cooperative
+      : (user.cooperative?.name ?? "");
   const loanEligible = kyc?.status === "APPROVED";
   const kycApproved = kyc?.status === "APPROVED";
   const unreadCount = notifications?.filter((n) => !n.isRead).length ?? 0;
@@ -105,9 +109,9 @@ function DashboardPage() {
         }
       >
         <div>
-          <p className="text-secondary text-xs font-medium">Welcome back</p>
+          {/* <p className="text-secondary text-xs font-medium">Welcome back</p> */}
           <h1 className="font-headline text-on-surface text-lg leading-tight font-bold">
-            {user.fullName ?? ""}
+            Namaste, {user.fullName ?? ""}!
           </h1>
         </div>
       </AppHeader>
@@ -115,9 +119,7 @@ function DashboardPage() {
       <main className="space-y-8 px-6 pt-2">
         {/* Editorial heading */}
         <section>
-          <p className="text-on-surface-variant text-sm">
-            {user.cooperative ?? ""}
-          </p>
+          <p className="text-on-surface-variant text-sm">{cooperativeName}</p>
           <h2 className="font-headline text-on-surface mt-1 text-3xl leading-tight font-bold tracking-tight">
             Your finances,
             <br />

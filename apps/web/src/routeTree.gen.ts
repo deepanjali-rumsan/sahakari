@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TodosRouteImport } from './routes/todos'
+import { Route as SetupCooperativeRouteImport } from './routes/setup-cooperative'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,6 +27,11 @@ import { Route as AppContactsIdEditRouteImport } from './routes/_app.contacts.$i
 const TodosRoute = TodosRouteImport.update({
   id: '/todos',
   path: '/todos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupCooperativeRoute = SetupCooperativeRouteImport.update({
+  id: '/setup-cooperative',
+  path: '/setup-cooperative',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -91,6 +97,7 @@ const AppContactsIdEditRoute = AppContactsIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/setup-cooperative': typeof SetupCooperativeRoute
   '/todos': typeof TodosRoute
   '/contacts': typeof AppContactsRouteWithChildren
   '/customers': typeof AppCustomersRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/setup-cooperative': typeof SetupCooperativeRoute
   '/todos': typeof TodosRoute
   '/contacts': typeof AppContactsRouteWithChildren
   '/customers': typeof AppCustomersRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/setup-cooperative': typeof SetupCooperativeRoute
   '/todos': typeof TodosRoute
   '/_app/contacts': typeof AppContactsRouteWithChildren
   '/_app/customers': typeof AppCustomersRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/setup-cooperative'
     | '/todos'
     | '/contacts'
     | '/customers'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/setup-cooperative'
     | '/todos'
     | '/contacts'
     | '/customers'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/setup-cooperative'
     | '/todos'
     | '/_app/contacts'
     | '/_app/customers'
@@ -182,6 +194,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SetupCooperativeRoute: typeof SetupCooperativeRoute
   TodosRoute: typeof TodosRoute
 }
 
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       path: '/todos'
       fullPath: '/todos'
       preLoaderRoute: typeof TodosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup-cooperative': {
+      id: '/setup-cooperative'
+      path: '/setup-cooperative'
+      fullPath: '/setup-cooperative'
+      preLoaderRoute: typeof SetupCooperativeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -340,6 +360,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  SetupCooperativeRoute: SetupCooperativeRoute,
   TodosRoute: TodosRoute,
 }
 export const routeTree = rootRouteImport

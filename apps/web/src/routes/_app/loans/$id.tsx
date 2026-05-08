@@ -146,7 +146,11 @@ function LoanDetailPage() {
           </div>
           <div>
             <span className="text-xs text-gray-400 block">Cooperative</span>
-            <span className="text-sm">{loan.user?.cooperative ?? '—'}</span>
+            <span className="text-sm">
+              {typeof loan.user?.cooperative === 'string'
+                ? loan.user.cooperative
+                : (loan.user?.cooperative?.name ?? '—')}
+            </span>
           </div>
           <div>
             <span className="text-xs text-gray-400 block">Passbook No.</span>

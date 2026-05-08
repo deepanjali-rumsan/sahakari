@@ -111,6 +111,8 @@ enum LoanStatus {
   UNDER_REVIEW
   APPROVED
   REJECTED
+  PAID
+  OUTSTANDING
 }
 
 enum AdminRole {
@@ -124,38 +126,73 @@ enum NotificationType {
   GENERAL
 }
 
+model Cooperative {
+  id                 String   @id @default(cuid())
+  
+  name               String   @unique
+  code               String?  @unique
+  provinceId         String?
+  province           Province?    @relation(fields: [provinceId], references: [id])
+  districtId         String?
+  district           District?    @relation(fields: [districtId], references: [id])
+  municipalityId     String?
+  municipality       Municipality? @relation(fields: [municipalityId], references: [id])
+  
+  wardNumber         Int?
+  tole               String?
+  address            String?
+  
+  establishedYear    DateTime?
+  panNumber          String?  @unique
+  registrationNumber String?  @unique
+  logoUrl            String?
+  email              String?  @unique
+  contactNumber      String?
+  
+  isActive           Boolean  @default(true)
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  users              User[]
+  adminUsers         AdminUser[]
+}
+
 model Province {
-  id         String     @id @default(cuid())
-  name       String     @unique
-  nameNp     String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  districts  District[]
+  id           String        @id @default(cuid())
+  name         String        @unique
+  nameNp       String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  districts    District[]
+  cooperatives Cooperative[]
 }
 
 model District {
-  id          String        @id @default(cuid())
-  name        String
-  nameNp      String
-  provinceId  String
-  province    Province      @relation(fields: [provinceId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id               String            @id @default(cuid())
+  name             String
+  nameNp           String
+  provinceId       String
+  province         Province          @relation(fields: [provinceId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   municipalities   Municipality[]
+  cooperatives     Cooperative[]
   kycs             Kyc[]             @relation("KycDistrict")
   loanApplications LoanApplication[] @relation("LoanDistrict")
   @@unique([provinceId, name])
 }
 
 model Municipality {
-  id         String       @id @default(cuid())
-  name       String
-  nameNp     String
-  type       String       @default("MUNICIPALITY")
-  districtId String
-  district   District     @relation(fields: [districtId], references: [id])
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id               String            @id @default(cuid())
+  name             String
+  nameNp           String
+  type             String            @default("MUNICIPALITY")
+  districtId       String
+  district         District          @relation(fields: [districtId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  cooperatives     Cooperative[]
   kycs             Kyc[]             @relation("KycMunicipality")
   loanApplications LoanApplication[] @relation("LoanMunicipality")
   @@unique([districtId, name])
@@ -165,7 +202,8 @@ model User {
   id               String       @id @default(cuid())
   phone            String       @unique
   fullName         String
-  cooperative     String
+  cooperativeId    String
+  cooperative      Cooperative  @relation(fields: [cooperativeId], references: [id])
   passbookNumber   String       @unique
   password         String
   email            String?
@@ -175,6 +213,9 @@ model User {
   loanApplications LoanApplication[]
   notifications    Notification[]
   adminOtp         AdminOtp[]
+  passbook         Passbook?
+  
+  @@index([cooperativeId])
 }
 
 model Kyc {
@@ -300,13 +341,17 @@ model LoanApplication {
 }
 
 model AdminUser {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String
-  role      AdminRole @default(ADMIN)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  otps      AdminOtp[]
+  id            String       @id @default(cuid())
+  email         String       @unique
+  name          String
+  role          AdminRole    @default(ADMIN)
+  cooperativeId String?
+  cooperative   Cooperative? @relation(fields: [cooperativeId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now())
+  otps          AdminOtp[]
+  
+  @@index([cooperativeId])
 }
 
 model AdminOtp {
@@ -334,16 +379,17 @@ model Notification {
 }
 
 model Passbook {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  currentBalance Float   @default(0)
-  totalSavings   Float   @default(0)
-  totalWithdrawals Float @default(0)
-  interestRateSavings Float @default(0)
-  interestRateLoan    Float @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  transactions  PassbookTransaction[]
+  id                  String                @id @default(cuid())
+  userId              String                @unique
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentBalance      Float                 @default(0)
+  totalSavings        Float                 @default(0)
+  totalWithdrawals    Float                 @default(0)
+  interestRateSavings Float                 @default(0)
+  interestRateLoan    Float                 @default(0)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  transactions        PassbookTransaction[]
 }
 
 model PassbookTransaction {

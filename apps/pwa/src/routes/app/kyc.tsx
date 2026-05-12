@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import {
   AlertCircle,
   CheckCircle2,
@@ -11,16 +17,17 @@ import {
 
 import { createKycApi } from "@rs/sdk";
 
+import type { KycSubmitFieldError } from "../../lib/kyc-submit-errors";
+import { AppHeader } from "../../components/app-header";
+import TooltipWrapper from "../../components/tooltip-wrapper";
 import {
   clearKycSubmitErrors,
   getFirstKycErrorRoute,
   storeKycSubmitErrors,
-  type KycSubmitFieldError,
 } from "../../lib/kyc-submit-errors";
 import { getToken } from "../../lib/storage";
 
 const apiUrl = import.meta.env["VITE_API_URL"] ?? "";
-const LOAN_ELIGIBLE_KYC_STATUSES = ["PENDING", "UNDER_REVIEW", "APPROVED"] as const;
 type SubmitError = Error & { details?: KycSubmitFieldError[] };
 
 export const Route = createFileRoute("/app/kyc")({
@@ -150,12 +157,8 @@ function KycPage() {
   }
 
   return (
-    <div className="bg-surface min-h-screen pb-32">
-      <header className="bg-surface/80 sticky top-0 z-40 flex h-16 items-center px-6 backdrop-blur-xl">
-        <h1 className="font-headline text-on-surface text-xl font-bold">
-          KYC Verification
-        </h1>
-      </header>
+    <div className="bg-surface min-h-screen">
+      <AppHeader title="KYC Verification" />
 
       <div className="space-y-5 px-6 pt-2">
         {/* Status card */}
@@ -204,12 +207,12 @@ function KycPage() {
         {/* Actions */}
         <div className="space-y-3">
           {submitMutation.isError && (
-            <div className="rounded-xl bg-error-container px-5 py-4">
-              <p className="text-sm font-semibold text-on-error-container">
+            <div className="bg-error-container rounded-xl px-5 py-4">
+              <p className="text-on-error-container text-sm font-semibold">
                 {submitMutation.error.message}
               </p>
               {submitErrors.length > 0 && (
-                <div className="mt-3 space-y-1 text-sm text-on-error-container">
+                <div className="text-on-error-container mt-3 space-y-1 text-sm">
                   {submitErrors.map((error) => (
                     <p key={error.field}>• {error.label}</p>
                   ))}
@@ -249,7 +252,7 @@ function KycPage() {
                   submitMutation.mutate();
                 }}
                 disabled={submitMutation.isPending}
-                className="w-full rounded-lg bg-primary py-3.5 text-sm font-semibold text-on-primary transition hover:bg-primary-dim active:scale-95 disabled:opacity-50"
+                className="bg-primary text-on-primary hover:bg-primary-dim w-full rounded-lg py-3.5 text-sm font-semibold transition active:scale-95 disabled:opacity-50"
               >
                 {submitMutation.isPending ? "Submitting..." : "Submit KYC"}
               </button>
@@ -259,19 +262,37 @@ function KycPage() {
           {(status === "PENDING" || status === "UNDER_REVIEW") && (
             <div className="bg-tertiary-container rounded-xl px-5 py-4 text-center">
               <p className="text-on-tertiary-container text-sm">
-                Your KYC has been submitted. You can apply for a loan while it
-                is under review.
+                Your KYC has been submitted and is under review.
               </p>
             </div>
           )}
 
-          {LOAN_ELIGIBLE_KYC_STATUSES.includes(status as (typeof LOAN_ELIGIBLE_KYC_STATUSES)[number]) && (
-            <Link
-              to="/app/loans/new"
-              className="bg-primary text-on-primary block w-full rounded-lg py-3.5 text-center text-sm font-semibold transition hover:bg-primary-dim active:scale-95"
-            >
-              Apply for Loan
-            </Link>
+          {/* Apply for Loan Button */}
+          {(status === "PENDING" ||
+            status === "UNDER_REVIEW" ||
+            status === "APPROVED") && (
+            <div>
+              {status === "APPROVED" ? (
+                <TooltipWrapper tip="Start your loan application process">
+                  <Link
+                    to="/app/loans/new"
+                    className="bg-primary text-on-primary hover:bg-primary-dim block w-full rounded-lg py-3.5 text-center text-sm font-semibold transition active:scale-95"
+                  >
+                    Apply for Loan
+                  </Link>
+                </TooltipWrapper>
+              ) : (
+                <TooltipWrapper tip="Your KYC must be approved before you can apply for a loan">
+                  <button
+                    type="button"
+                    disabled
+                    className="bg-surface-container-high text-on-surface-variant w-full cursor-not-allowed rounded-lg py-3.5 text-sm font-semibold"
+                  >
+                    Apply for Loan
+                  </button>
+                </TooltipWrapper>
+              )}
+            </div>
           )}
 
           {status === "REJECTED" && (
@@ -291,7 +312,7 @@ function KycPage() {
                   submitMutation.mutate();
                 }}
                 disabled={submitMutation.isPending}
-                className="w-full rounded-lg bg-primary py-3.5 text-sm font-semibold text-on-primary transition hover:bg-primary-dim active:scale-95 disabled:opacity-50"
+                className="bg-primary text-on-primary hover:bg-primary-dim w-full rounded-lg py-3.5 text-sm font-semibold transition active:scale-95 disabled:opacity-50"
               >
                 {submitMutation.isPending ? "Submitting..." : "Resubmit KYC"}
               </button>

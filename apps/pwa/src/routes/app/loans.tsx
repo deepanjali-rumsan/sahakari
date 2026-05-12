@@ -1,8 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useRouterState,
+} from "@tanstack/react-router";
 
-import { createLoanApi } from "@rs/sdk";
+import { createKycApi, createLoanApi } from "@rs/sdk";
 
+import { AppHeader } from "../../components/app-header";
+import TooltipWrapper from "../../components/tooltip-wrapper";
 import { getToken } from "../../lib/storage";
 
 const apiUrl = import.meta.env["VITE_API_URL"] ?? "";
@@ -46,7 +53,9 @@ function StatusBadge({ status }: { status: string }) {
   };
   const cfg = map[status] ?? map["DRAFT"];
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}>
+    <span
+      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${cfg.className}`}
+    >
       {cfg.label}
     </span>
   );
@@ -55,45 +64,98 @@ function StatusBadge({ status }: { status: string }) {
 function LoansPage() {
   const token = getToken();
   const loanApi = createLoanApi(apiUrl);
+  const kycApi = createKycApi(apiUrl);
+
   const { data: loans, isLoading } = useQuery({
     queryKey: ["loans"],
     queryFn: () => loanApi.listMine(token),
   });
 
+  const { data: kyc } = useQuery({
+    queryKey: ["kyc"],
+    queryFn: () => kycApi.getMine(token),
+  });
+
+  const kycApproved = kyc?.status === "APPROVED";
+
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface">
-        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      <div className="bg-surface flex min-h-screen items-center justify-center">
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface pb-32">
-      <header className="sticky top-0 z-40 flex items-center justify-between px-6 h-16 bg-surface/80 backdrop-blur-xl">
-        <h1 className="font-headline text-xl font-bold text-on-surface">My Loans</h1>
-        <Link
-          to="/app/loans/new"
-          className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-on-primary transition active:scale-95 hover:bg-primary-dim"
-        >
-          + New
-        </Link>
-      </header>
+    <div className="bg-surface min-h-screen">
+      <AppHeader
+        title="My Loans"
+        right={
+          <TooltipWrapper
+            tip={
+              kycApproved
+                ? "Apply for a new loan"
+                : "Your KYC must be approved before you can apply for a loan"
+            }
+            disable={kycApproved}
+          >
+            {kycApproved ? (
+              <Link
+                to="/app/loans/new"
+                className="bg-primary text-on-primary hover:bg-primary-dim rounded-lg px-5 py-2 text-sm font-semibold transition active:scale-95"
+              >
+                + New
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="bg-surface-container-high text-on-surface-variant cursor-not-allowed rounded-lg px-5 py-2 text-sm font-semibold"
+              >
+                + New
+              </button>
+            )}
+          </TooltipWrapper>
+        }
+      />
 
-      <div className="px-6 pt-2 space-y-4">
+      <div className="space-y-4 px-6 pt-2">
         {!loans || loans.length === 0 ? (
-          <div className="mt-8 rounded-xl bg-surface-container-low p-10 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface-container">
+          <div className="bg-surface-container-low mt-8 rounded-xl p-10 text-center">
+            <div className="bg-surface-container mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
               <span className="text-2xl">📋</span>
             </div>
-            <p className="text-sm font-semibold text-on-surface">No loan applications yet</p>
-            <p className="mt-1 text-xs text-on-surface-variant">Apply for your first loan to get started.</p>
-            <Link
-              to="/app/loans/new"
-              className="mt-5 inline-block rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-dim transition active:scale-95"
+            <p className="text-on-surface text-sm font-semibold">
+              No loan applications yet
+            </p>
+            <p className="text-on-surface-variant mt-1 text-xs">
+              Apply for your first loan to get started.
+            </p>
+            <TooltipWrapper
+              tip={
+                kycApproved
+                  ? "Start your loan application"
+                  : "Your KYC must be approved before you can apply for a loan"
+              }
+              disable={kycApproved}
             >
-              Apply for Loan
-            </Link>
+              {kycApproved ? (
+                <Link
+                  to="/app/loans/new"
+                  className="bg-primary text-on-primary hover:bg-primary-dim mt-5 inline-block rounded-full px-6 py-2.5 text-sm font-semibold transition active:scale-95"
+                >
+                  Apply for Loan
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="bg-surface-container-high text-on-surface-variant mt-5 cursor-not-allowed rounded-full px-6 py-2.5 text-sm font-semibold"
+                >
+                  Apply for Loan
+                </button>
+              )}
+            </TooltipWrapper>
           </div>
         ) : (
           <div className="space-y-3">
@@ -102,20 +164,20 @@ function LoansPage() {
                 key={loan.id}
                 to="/app/loans/$id"
                 params={{ id: loan.id }}
-                className="block rounded-xl bg-surface-container-lowest p-5 shadow-sm transition hover:bg-surface-container-low active:scale-[0.98]"
+                className="bg-surface-container-lowest hover:bg-surface-container-low block rounded-xl p-5 shadow-sm transition active:scale-[0.98]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-on-surface font-headline">
+                    <p className="text-on-surface font-headline text-sm font-semibold">
                       Ref: {loan.referenceNumber}
                     </p>
-                    <p className="mt-0.5 text-xs text-on-surface-variant">
+                    <p className="text-on-surface-variant mt-0.5 text-xs">
                       {loan.loanAmount
                         ? `NPR ${loan.loanAmount.toLocaleString()}`
                         : "Amount not set"}{" "}
                       · {loan.purpose?.replace("_", " ") ?? "—"}
                     </p>
-                    <p className="mt-0.5 text-xs text-on-surface-variant">
+                    <p className="text-on-surface-variant mt-0.5 text-xs">
                       {loan.duration?.replace(/_/g, " ") ?? "—"} ·{" "}
                       {loan.collateralType === "WITH"
                         ? "With Collateral"

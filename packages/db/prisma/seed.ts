@@ -1116,6 +1116,20 @@ const nepalGeo = {
 };
 
 async function main() {
+  console.log("Seeding default cooperative...");
+
+  // Create default cooperative
+  const cooperative = await prisma.cooperative.upsert({
+    where: { name: "Default Sahakari" },
+    update: {},
+    create: {
+      name: "Default Sahakari",
+      code: "SAH001",
+      isActive: true,
+    },
+  });
+  console.log(`  Cooperative: ${cooperative.name} (${cooperative.id})`);
+
   console.log("Seeding Nepal geographic data...");
 
   for (const provinceData of nepalGeo.provinces) {
@@ -1182,17 +1196,43 @@ async function main() {
     console.log(`  Municipality for ${districtName}: ${municipalities.length}`);
   }
 
-  // Seed admin user
-  await prisma.adminUser.upsert({
-    where: { email: "sahakari@maile.uk" },
-    update: {},
-    create: {
+  // Seed admin users (without cooperative link for first-time setup testing)
+  const adminUsers = [
+    {
       email: "sahakari@maile.uk",
-      name: "Sahakari",
+      name: "Sahakari Admin",
       role: "SUPER_ADMIN",
     },
-  });
-  console.log("  Admin user: sahakari@maile.uk");
+    {
+      email: "admin1@maile.uk",
+      name: "Admin One",
+      role: "SUPER_ADMIN",
+    },
+    {
+      email: "admin2@maile.uk",
+      name: "Admin Two",
+      role: "SUPER_ADMIN",
+    },
+    {
+      email: "admin3@maile.uk",
+      name: "Admin Three",
+      role: "SUPER_ADMIN",
+    },
+  ];
+
+  for (const adminData of adminUsers) {
+    await prisma.adminUser.upsert({
+      where: { email: adminData.email },
+      update: {},
+      create: {
+        email: adminData.email,
+        name: adminData.name,
+        role: adminData.role,
+        // cooperativeId: null - NOT linked initially so they see registration form
+      },
+    });
+    console.log(`  Admin user: ${adminData.email}`);
+  }
 
   console.log("Seed complete!");
 }

@@ -50,6 +50,14 @@ export class AuthService {
         passbookNumber: dto.passbookNumber,
         password: hashed,
       },
+      include: {
+        cooperative: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     const token = this.jwtService.sign({ sub: user.id, phone: user.phone });
@@ -60,6 +68,14 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { phone: dto.phone },
+      include: {
+        cooperative: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
@@ -72,7 +88,17 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        cooperative: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
     if (!user) throw new UnauthorizedException();
     const { password: _, ...userData } = user;
     return userData;

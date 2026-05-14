@@ -1,6 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useMatches,
+} from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Users, FileText } from 'lucide-react'
+import { Users, Eye } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/customers')({
   component: CustomersPage,
@@ -13,6 +18,10 @@ function getToken() {
 }
 
 function CustomersPage() {
+  const matches = useMatches()
+  const isChildActive =
+    matches[matches.length - 1]?.routeId !== '/_app/customers'
+
   const token = getToken()
 
   const { data: customers, isLoading } = useQuery({
@@ -25,6 +34,8 @@ function CustomersPage() {
     },
     enabled: !!token,
   })
+
+  if (isChildActive) return <Outlet />
 
   return (
     <div className="flex-1 overflow-y-auto px-8 py-7">
@@ -64,6 +75,9 @@ function CustomersPage() {
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">
                   Registered
+                </th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -106,6 +120,15 @@ function CustomersPage() {
                   </td>
                   <td className="py-3 px-4 text-xs text-gray-400">
                     {new Date(user.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="py-3 px-4">
+                    <Link
+                      to={`/customers/${user.id}`}
+                      title="View member details"
+                      className="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors"
+                    >
+                      <Eye size={16} />
+                    </Link>
                   </td>
                 </tr>
               ))}

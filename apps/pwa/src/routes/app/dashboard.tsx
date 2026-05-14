@@ -83,8 +83,19 @@ function DashboardPage() {
   });
 
   const user = JSON.parse(getStorageItem("user") ?? "{}");
-  const loanEligible = kyc?.status === "APPROVED";
+  const cooperativeName =
+    typeof user.cooperative === "string"
+      ? user.cooperative
+      : (user.cooperative?.name ?? "");
   const kycApproved = kyc?.status === "APPROVED";
+
+  // Check if there are any pending loans (not APPROVED)
+  const hasPendingLoans =
+    loans?.some(
+      (loan) => loan.status !== "APPROVED" && loan.status !== "REJECTED",
+    ) ?? false;
+
+  const loanEligible = kycApproved && !hasPendingLoans;
   const unreadCount = notifications?.filter((n) => !n.isRead).length ?? 0;
 
   return (
@@ -105,7 +116,6 @@ function DashboardPage() {
         }
       >
         <div>
-          <p className="text-secondary text-xs font-medium">Welcome back</p>
           <h1 className="font-headline text-on-surface text-lg leading-tight font-bold">
             {user.fullName ?? ""}
           </h1>
@@ -115,10 +125,8 @@ function DashboardPage() {
       <main className="space-y-8 px-6 pt-2">
         {/* Editorial heading */}
         <section>
-          <p className="text-on-surface-variant text-sm">
-            {user.cooperative ?? ""}
-          </p>
-          <h2 className="font-headline text-on-surface mt-1 text-3xl leading-tight font-bold tracking-tight">
+          <p className="text-sm text-gray-700">{cooperativeName}</p>
+          <h2 className="font-headline mt-1 text-3xl leading-tight font-bold tracking-tight text-red-700">
             Your finances,
             <br />
             at a glance.
@@ -201,9 +209,11 @@ function DashboardPage() {
                   Apply for Loan
                 </p>
                 <p className="text-on-surface-variant mt-0.5 text-xs">
-                  {loanEligible
-                    ? "KYC approved — you can apply"
-                    : "KYC approval required"}
+                  {!kycApproved
+                    ? "KYC approval required"
+                    : hasPendingLoans
+                      ? "You have a pending loan"
+                      : "KYC approved — you can apply"}
                 </p>
               </div>
             </div>
@@ -217,7 +227,13 @@ function DashboardPage() {
                 </Link>
               </TooltipWrapper>
             ) : (
-              <TooltipWrapper tip="Your KYC must be approved before you can apply for a loan">
+              <TooltipWrapper
+                tip={
+                  !kycApproved
+                    ? "Your KYC must be approved before you can apply for a loan"
+                    : "You have a pending loan. Complete or wait for approval before applying for a new loan."
+                }
+              >
                 <button
                   type="button"
                   disabled

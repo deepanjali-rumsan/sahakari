@@ -2,10 +2,11 @@ import type { District, Municipality, Province } from "@rs/sdk";
 import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import { createGeoApi, createKycApi } from "@rs/sdk";
 
+import { GenerationalSection } from "../../../components/kyc/FormFields";
 import { getKycSubmitErrorsForRoute } from "../../../lib/kyc-submit-errors";
 import { getToken } from "../../../lib/storage";
 
@@ -31,9 +32,13 @@ function Field({
   return (
     <div
       id={fieldKey ? `kyc-field-${fieldKey}` : undefined}
-      className={hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""}
+      className={
+        hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""
+      }
     >
-      <label className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}>
+      <label
+        className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}
+      >
         {label}
       </label>
       {children}
@@ -74,25 +79,62 @@ function Select({
 
 const TABS = ["Basic Info", "Mandatory", "Nominee", "Signature"] as const;
 
+// Wrapper component - handles loading and error states
 function BasicInfoPage() {
   const token = getToken();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>("");
 
   const { data: kyc, isLoading } = useQuery({
     queryKey: ["kyc"],
     queryFn: () => kycApi.getMine(token),
   });
 
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!kyc) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
+        <p className="text-center text-gray-600">
+          No KYC data found. Please start KYC first.
+        </p>
+        <button
+          onClick={() => navigate({ to: "/app/kyc" })}
+          className="rounded-lg bg-teal-800 px-6 py-2 text-white"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  return <BasicInfoForm kyc={kyc} />;
+}
+
+// Form component - only renders when kyc data exists
+function BasicInfoForm({
+  kyc,
+}: {
+  kyc: NonNullable<Awaited<ReturnType<typeof kycApi.getMine>>>;
+}) {
+  const token = getToken();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>("");
+
   const { data: provinces } = useQuery({
     queryKey: ["provinces"],
     queryFn: () => geoApi.getProvinces(),
   });
 
-  const provinceId = selectedProvinceId || kyc?.provinceId || "";
-  const districtId = selectedDistrictId || kyc?.districtId || "";
+  const provinceId = selectedProvinceId || kyc.provinceId || "";
+  const districtId = selectedDistrictId || kyc.districtId || "";
 
   const { data: districts } = useQuery({
     queryKey: ["districts", provinceId],
@@ -108,16 +150,17 @@ function BasicInfoPage() {
 
   const saveMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) =>
-      kycApi.updateBasicInfo(token, kyc!.id, data),
+      kycApi.updateBasicInfo(token, kyc.id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["kyc"] }),
   });
+
   const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/basic-info");
   const errorFields = new Set(routeErrors.map((error) => error.field));
 
   // Parse existing genealogy JSON
   const existingGenealogy = (() => {
     try {
-      const g = kyc?.genealogyJson as unknown as Array<
+      const g = kyc.genealogyJson as unknown as Array<
         Record<string, string>
       > | null;
       return g ?? [];
@@ -131,89 +174,88 @@ function BasicInfoPage() {
 
   const form = useForm({
     defaultValues: {
-      fullNameEn: kyc?.fullNameEn ?? "",
-      fullNameNp: kyc?.fullNameNp ?? "",
-      passbookNo: kyc?.passbookNo ?? "",
-      memberType: kyc?.memberType ?? "",
-      joinDate: kyc?.joinDate ? kyc.joinDate.split("T")[0] : "",
-      gender: kyc?.gender ?? "",
-      dob: kyc?.dob ? kyc.dob.split("T")[0] : "",
-      citizenshipNumber: kyc?.citizenshipNumber ?? "",
-      citizenshipIssuedDate: kyc?.citizenshipIssuedDate
+      fullNameEn: kyc.fullNameEn ?? "",
+      fullNameNp: kyc.fullNameNp ?? "",
+      passbookNo: kyc.passbookNo ?? "",
+      memberType: kyc.memberType ?? "",
+      joinDate: kyc.joinDate ? kyc.joinDate.split("T")[0] : "",
+      gender: kyc.gender ?? "",
+      dob: kyc.dob ? kyc.dob.split("T")[0] : "",
+      citizenshipNumber: kyc.citizenshipNumber ?? "",
+      citizenshipIssuedDate: kyc.citizenshipIssuedDate
         ? kyc.citizenshipIssuedDate.split("T")[0]
         : "",
-      citizenshipIssuedDistrict: kyc?.citizenshipIssuedDistrict ?? "",
-      ninIdNumber: kyc?.ninIdNumber ?? "",
-      ninIssuedDate: kyc?.ninIssuedDate ? kyc.ninIssuedDate.split("T")[0] : "",
-      ninIssuedDistrict: kyc?.ninIssuedDistrict ?? "",
-      monthlyIncome: kyc?.monthlyIncome ?? "",
-      nationality: kyc?.nationality ?? "Nepali",
-      provinceId: kyc?.provinceId ?? "",
-      districtId: kyc?.districtId ?? "",
-      municipalityId: kyc?.municipalityId ?? "",
-      wardNumber: kyc?.wardNumber ?? "",
-      tole: kyc?.tole ?? "",
-      religion: kyc?.religion ?? "",
-      occupation: kyc?.occupation ?? "",
-      education: kyc?.education ?? "",
-      contactNumber: kyc?.contactNumber ?? "",
-      mobileNumber: kyc?.mobileNumber ?? "",
-      email: kyc?.email ?? "",
-      temporaryAddress: kyc?.temporaryAddress ?? "",
-      shareholderNumber: kyc?.shareholderNumber ?? "",
-      // Genealogy: single entry (relation + name fields)
-      genealogy_relation: getGenValue(0, "relation"),
-      genealogy_nameEn: getGenValue(0, "nameEn"),
-      genealogy_surnameEn: getGenValue(0, "surnameEn"),
-      genealogy_nameNp: getGenValue(0, "nameNp"),
-      genealogy_surnameNp: getGenValue(0, "surnameNp"),
+      citizenshipIssuedDistrict: kyc.citizenshipIssuedDistrict ?? "",
+      ninIdNumber: kyc.ninIdNumber ?? "",
+      ninIssuedDate: kyc.ninIssuedDate ? kyc.ninIssuedDate.split("T")[0] : "",
+      ninIssuedDistrict: kyc.ninIssuedDistrict ?? "",
+      monthlyIncome: kyc.monthlyIncome ?? "",
+      nationality: kyc.nationality ?? "Nepali",
+      provinceId: kyc.provinceId ?? "",
+      districtId: kyc.districtId ?? "",
+      municipalityId: kyc.municipalityId ?? "",
+      wardNumber: kyc.wardNumber ?? "",
+      tole: kyc.tole ?? "",
+      religion: kyc.religion ?? "",
+      occupation: kyc.occupation ?? "",
+      education: kyc.education ?? "",
+      contactNumber: kyc.contactNumber ?? "",
+      mobileNumber: kyc.mobileNumber ?? "",
+      email: kyc.email ?? "",
+      temporaryAddress: kyc.temporaryAddress ?? "",
+      shareholderNumber: kyc.shareholderNumber ?? "",
+      // Generational Information
+      grandfather_nameEn: getGenValue(0, "nameEn"),
+      grandfather_surnameEn: getGenValue(0, "surnameEn"),
+      grandfather_nameNp: getGenValue(0, "nameNp"),
+      grandfather_surnameNp: getGenValue(0, "surnameNp"),
+      father_nameEn: getGenValue(1, "nameEn"),
+      father_surnameEn: getGenValue(1, "surnameEn"),
+      father_nameNp: getGenValue(1, "nameNp"),
+      father_surnameNp: getGenValue(1, "surnameNp"),
+      spouse_nameEn: getGenValue(2, "nameEn"),
+      spouse_surnameEn: getGenValue(2, "surnameEn"),
+      spouse_nameNp: getGenValue(2, "nameNp"),
+      spouse_surnameNp: getGenValue(2, "surnameNp"),
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!kyc) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
-        <p className="text-center text-gray-600">No KYC data found. Please start KYC first.</p>
-        <button
-          onClick={() => navigate({ to: "/app/kyc" })}
-          className="rounded-lg bg-teal-800 px-6 py-2 text-white"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (routeErrors.length === 0) return;
-    const element = document.getElementById(`kyc-field-${routeErrors[0].field}`);
+    const element = document.getElementById(
+      `kyc-field-${routeErrors[0].field}`,
+    );
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [routeErrors]);
 
   const handleSave = (data: Record<string, unknown>) => {
     // Convert empty strings to null for enum and FK fields (Prisma rejects empty strings for these)
-    for (const field of ["memberType", "gender", "religion", "education", "provinceId", "districtId", "municipalityId"]) {
+    for (const field of [
+      "memberType",
+      "gender",
+      "religion",
+      "education",
+      "provinceId",
+      "districtId",
+      "municipalityId",
+    ]) {
       if (data[field] === "") data[field] = null;
     }
 
     // Convert numeric fields from string to proper types
-    data.wardNumber = data.wardNumber !== "" && data.wardNumber != null
-      ? (parseInt(data.wardNumber as string, 10) || null)
-      : null;
-    data.monthlyIncome = data.monthlyIncome !== "" && data.monthlyIncome != null
-      ? (parseFloat(data.monthlyIncome as string) || null)
-      : null;
+    data.wardNumber =
+      data.wardNumber !== "" && data.wardNumber != null
+        ? parseInt(data.wardNumber as string, 10) || null
+        : null;
+    data.monthlyIncome =
+      data.monthlyIncome !== "" && data.monthlyIncome != null
+        ? parseFloat(data.monthlyIncome as string) || null
+        : null;
 
     // Convert date strings to ISO (set null for empty)
-    data.joinDate = data.joinDate ? new Date(data.joinDate as string).toISOString() : null;
+    data.joinDate = data.joinDate
+      ? new Date(data.joinDate as string).toISOString()
+      : null;
     data.dob = data.dob ? new Date(data.dob as string).toISOString() : null;
     data.citizenshipIssuedDate = data.citizenshipIssuedDate
       ? new Date(data.citizenshipIssuedDate as string).toISOString()
@@ -223,21 +265,56 @@ function BasicInfoPage() {
       : null;
 
     // Build genealogy JSON from individual fields
-    const genealogyEntry = {
-      relation: data.genealogy_relation,
-      nameEn: data.genealogy_nameEn,
-      surnameEn: data.genealogy_surnameEn,
-      nameNp: data.genealogy_nameNp,
-      surnameNp: data.genealogy_surnameNp,
-    };
-    data.genealogyJson = [genealogyEntry];
+    const genealogyEntries = [];
+
+    // Grandfather
+    if (data.grandfather_nameEn || data.grandfather_nameNp) {
+      genealogyEntries.push({
+        relation: "Grandfather",
+        nameEn: data.grandfather_nameEn,
+        surnameEn: data.grandfather_surnameEn,
+        nameNp: data.grandfather_nameNp,
+        surnameNp: data.grandfather_surnameNp,
+      });
+    }
+
+    // Father / Mother
+    if (data.father_nameEn || data.father_nameNp) {
+      genealogyEntries.push({
+        relation: "Father",
+        nameEn: data.father_nameEn,
+        surnameEn: data.father_surnameEn,
+        nameNp: data.father_nameNp,
+        surnameNp: data.father_surnameNp,
+      });
+    }
+
+    // Spouse (Husband/Wife)
+    if (data.spouse_nameEn || data.spouse_nameNp) {
+      genealogyEntries.push({
+        relation: "Spouse",
+        nameEn: data.spouse_nameEn,
+        surnameEn: data.spouse_surnameEn,
+        nameNp: data.spouse_nameNp,
+        surnameNp: data.spouse_surnameNp,
+      });
+    }
+
+    data.genealogyJson = genealogyEntries;
 
     // Remove flat genealogy fields before sending
-    delete data.genealogy_relation;
-    delete data.genealogy_nameEn;
-    delete data.genealogy_surnameEn;
-    delete data.genealogy_nameNp;
-    delete data.genealogy_surnameNp;
+    delete data.grandfather_nameEn;
+    delete data.grandfather_surnameEn;
+    delete data.grandfather_nameNp;
+    delete data.grandfather_surnameNp;
+    delete data.father_nameEn;
+    delete data.father_surnameEn;
+    delete data.father_nameNp;
+    delete data.father_surnameNp;
+    delete data.spouse_nameEn;
+    delete data.spouse_surnameEn;
+    delete data.spouse_nameNp;
+    delete data.spouse_surnameNp;
 
     saveMutation.mutate(data);
   };
@@ -246,12 +323,12 @@ function BasicInfoPage() {
     <div className="min-h-screen bg-gray-100">
       {/* Teal Header */}
       <div className="bg-teal-800 px-5 pt-10 pb-6">
-        <button
-          onClick={() => navigate({ to: "/app/kyc" })}
+        <Link
+          to="/app/dashboard"
           className="mb-3 flex items-center gap-2 text-sm text-teal-200"
         >
           <span className="text-lg">←</span> Dashboard
-        </button>
+        </Link>
         <h1 className="mb-5 text-2xl font-bold text-white">KYC Verification</h1>
         {/* Tab bar */}
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -292,7 +369,11 @@ function BasicInfoPage() {
           <div className="space-y-4">
             {/* Full Name row */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Full Name (English)" fieldKey="fullNameEn" hasError={errorFields.has("fullNameEn")}>
+              <Field
+                label="Full Name (English)"
+                fieldKey="fullNameEn"
+                hasError={errorFields.has("fullNameEn")}
+              >
                 <form.Field name="fullNameEn">
                   {(field) => (
                     <Input
@@ -304,7 +385,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Full Name (Nepali)" fieldKey="fullNameNp" hasError={errorFields.has("fullNameNp")}>
+              <Field
+                label="Full Name (Nepali)"
+                fieldKey="fullNameNp"
+                hasError={errorFields.has("fullNameNp")}
+              >
                 <form.Field name="fullNameNp">
                   {(field) => (
                     <Input
@@ -320,7 +405,11 @@ function BasicInfoPage() {
 
             {/* Alias + Type of Member */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Alias (Passbook No.)" fieldKey="passbookNo" hasError={errorFields.has("passbookNo")}>
+              <Field
+                label="Alias (Passbook No.)"
+                fieldKey="passbookNo"
+                hasError={errorFields.has("passbookNo")}
+              >
                 <form.Field name="passbookNo">
                   {(field) => (
                     <Input
@@ -332,7 +421,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Type of Member" fieldKey="memberType" hasError={errorFields.has("memberType")}>
+              <Field
+                label="Type of Member"
+                fieldKey="memberType"
+                hasError={errorFields.has("memberType")}
+              >
                 <form.Field name="memberType">
                   {(field) => (
                     <Select
@@ -349,7 +442,11 @@ function BasicInfoPage() {
               </Field>
             </div>
 
-            <Field label="Shareholder Number" fieldKey="shareholderNumber" hasError={errorFields.has("shareholderNumber")}>
+            <Field
+              label="Shareholder Number"
+              fieldKey="shareholderNumber"
+              hasError={errorFields.has("shareholderNumber")}
+            >
               <form.Field name="shareholderNumber">
                 {(field) => (
                   <Input
@@ -363,7 +460,11 @@ function BasicInfoPage() {
             </Field>
 
             {/* Join Date */}
-            <Field label="Join Date" fieldKey="joinDate" hasError={errorFields.has("joinDate")}>
+            <Field
+              label="Join Date"
+              fieldKey="joinDate"
+              hasError={errorFields.has("joinDate")}
+            >
               <form.Field name="joinDate">
                 {(field) => (
                   <Input
@@ -378,7 +479,11 @@ function BasicInfoPage() {
 
             {/* Gender + DOB */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Gender" fieldKey="gender" hasError={errorFields.has("gender")}>
+              <Field
+                label="Gender"
+                fieldKey="gender"
+                hasError={errorFields.has("gender")}
+              >
                 <form.Field name="gender">
                   {(field) => (
                     <Select
@@ -394,7 +499,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Date of Birth" fieldKey="dob" hasError={errorFields.has("dob")}>
+              <Field
+                label="Date of Birth"
+                fieldKey="dob"
+                hasError={errorFields.has("dob")}
+              >
                 <form.Field name="dob">
                   {(field) => (
                     <Input
@@ -410,7 +519,11 @@ function BasicInfoPage() {
 
             {/* Citizenship Number + Issued Date */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Citizenship Number" fieldKey="citizenshipNumber" hasError={errorFields.has("citizenshipNumber")}>
+              <Field
+                label="Citizenship Number"
+                fieldKey="citizenshipNumber"
+                hasError={errorFields.has("citizenshipNumber")}
+              >
                 <form.Field name="citizenshipNumber">
                   {(field) => (
                     <Input
@@ -422,7 +535,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Citizenship Issued Date" fieldKey="citizenshipIssuedDate" hasError={errorFields.has("citizenshipIssuedDate")}>
+              <Field
+                label="Citizenship Issued Date"
+                fieldKey="citizenshipIssuedDate"
+                hasError={errorFields.has("citizenshipIssuedDate")}
+              >
                 <form.Field name="citizenshipIssuedDate">
                   {(field) => (
                     <Input
@@ -437,7 +554,11 @@ function BasicInfoPage() {
             </div>
 
             {/* Citizenship Issued District */}
-            <Field label="Citizenship Issued District" fieldKey="citizenshipIssuedDistrict" hasError={errorFields.has("citizenshipIssuedDistrict")}>
+            <Field
+              label="Citizenship Issued District"
+              fieldKey="citizenshipIssuedDistrict"
+              hasError={errorFields.has("citizenshipIssuedDistrict")}
+            >
               <form.Field name="citizenshipIssuedDistrict">
                 {(field) => (
                   <Input
@@ -452,7 +573,11 @@ function BasicInfoPage() {
 
             {/* NIN Number + NIN Issued Date */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="NIN Number" fieldKey="ninIdNumber" hasError={errorFields.has("ninIdNumber")}>
+              <Field
+                label="NIN Number"
+                fieldKey="ninIdNumber"
+                hasError={errorFields.has("ninIdNumber")}
+              >
                 <form.Field name="ninIdNumber">
                   {(field) => (
                     <Input
@@ -464,7 +589,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="NIN Issued Date" fieldKey="ninIssuedDate" hasError={errorFields.has("ninIssuedDate")}>
+              <Field
+                label="NIN Issued Date"
+                fieldKey="ninIssuedDate"
+                hasError={errorFields.has("ninIssuedDate")}
+              >
                 <form.Field name="ninIssuedDate">
                   {(field) => (
                     <Input
@@ -479,7 +608,11 @@ function BasicInfoPage() {
             </div>
 
             {/* NIN Issued District */}
-            <Field label="NIN Issued District" fieldKey="ninIssuedDistrict" hasError={errorFields.has("ninIssuedDistrict")}>
+            <Field
+              label="NIN Issued District"
+              fieldKey="ninIssuedDistrict"
+              hasError={errorFields.has("ninIssuedDistrict")}
+            >
               <form.Field name="ninIssuedDistrict">
                 {(field) => (
                   <Input
@@ -494,7 +627,11 @@ function BasicInfoPage() {
 
             {/* Monthly Income + Nationality */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Monthly Income (NPR)" fieldKey="monthlyIncome" hasError={errorFields.has("monthlyIncome")}>
+              <Field
+                label="Monthly Income (NPR)"
+                fieldKey="monthlyIncome"
+                hasError={errorFields.has("monthlyIncome")}
+              >
                 <form.Field name="monthlyIncome">
                   {(field) => (
                     <Input
@@ -507,7 +644,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Nationality" fieldKey="nationality" hasError={errorFields.has("nationality")}>
+              <Field
+                label="Nationality"
+                fieldKey="nationality"
+                hasError={errorFields.has("nationality")}
+              >
                 <form.Field name="nationality">
                   {(field) => (
                     <Input
@@ -523,7 +664,11 @@ function BasicInfoPage() {
 
             {/* Province + District */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Province" fieldKey="provinceId" hasError={errorFields.has("provinceId")}>
+              <Field
+                label="Province"
+                fieldKey="provinceId"
+                hasError={errorFields.has("provinceId")}
+              >
                 <form.Field name="provinceId">
                   {(field) => (
                     <Select
@@ -548,7 +693,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="District" fieldKey="districtId" hasError={errorFields.has("districtId")}>
+              <Field
+                label="District"
+                fieldKey="districtId"
+                hasError={errorFields.has("districtId")}
+              >
                 <form.Field name="districtId">
                   {(field) => (
                     <Select
@@ -575,7 +724,11 @@ function BasicInfoPage() {
             </div>
 
             {/* Municipality */}
-            <Field label="Municipality / Rural Municipality" fieldKey="municipalityId" hasError={errorFields.has("municipalityId")}>
+            <Field
+              label="Municipality / Rural Municipality"
+              fieldKey="municipalityId"
+              hasError={errorFields.has("municipalityId")}
+            >
               <form.Field name="municipalityId">
                 {(field) => (
                   <Select
@@ -597,7 +750,11 @@ function BasicInfoPage() {
 
             {/* Ward Number + Street/Tole */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Ward Number" fieldKey="wardNumber" hasError={errorFields.has("wardNumber")}>
+              <Field
+                label="Ward Number"
+                fieldKey="wardNumber"
+                hasError={errorFields.has("wardNumber")}
+              >
                 <form.Field name="wardNumber">
                   {(field) => (
                     <Input
@@ -612,7 +769,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Street / Tole" fieldKey="tole" hasError={errorFields.has("tole")}>
+              <Field
+                label="Street / Tole"
+                fieldKey="tole"
+                hasError={errorFields.has("tole")}
+              >
                 <form.Field name="tole">
                   {(field) => (
                     <Input
@@ -628,7 +789,11 @@ function BasicInfoPage() {
 
             {/* Religion + Occupation */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Religion" fieldKey="religion" hasError={errorFields.has("religion")}>
+              <Field
+                label="Religion"
+                fieldKey="religion"
+                hasError={errorFields.has("religion")}
+              >
                 <form.Field name="religion">
                   {(field) => (
                     <Select
@@ -652,7 +817,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Occupation" fieldKey="occupation" hasError={errorFields.has("occupation")}>
+              <Field
+                label="Occupation"
+                fieldKey="occupation"
+                hasError={errorFields.has("occupation")}
+              >
                 <form.Field name="occupation">
                   {(field) => (
                     <Input
@@ -667,7 +836,11 @@ function BasicInfoPage() {
             </div>
 
             {/* Education */}
-            <Field label="Education" fieldKey="education" hasError={errorFields.has("education")}>
+            <Field
+              label="Education"
+              fieldKey="education"
+              hasError={errorFields.has("education")}
+            >
               <form.Field name="education">
                 {(field) => (
                   <Select
@@ -699,7 +872,11 @@ function BasicInfoPage() {
 
             {/* Contact + Mobile */}
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Contact Number" fieldKey="contactNumber" hasError={errorFields.has("contactNumber")}>
+              <Field
+                label="Contact Number"
+                fieldKey="contactNumber"
+                hasError={errorFields.has("contactNumber")}
+              >
                 <form.Field name="contactNumber">
                   {(field) => (
                     <Input
@@ -712,7 +889,11 @@ function BasicInfoPage() {
                   )}
                 </form.Field>
               </Field>
-              <Field label="Mobile Number" fieldKey="mobileNumber" hasError={errorFields.has("mobileNumber")}>
+              <Field
+                label="Mobile Number"
+                fieldKey="mobileNumber"
+                hasError={errorFields.has("mobileNumber")}
+              >
                 <form.Field name="mobileNumber">
                   {(field) => (
                     <Input
@@ -758,91 +939,30 @@ function BasicInfoPage() {
           </div>
         </div>
 
-        {/* Genealogy Information */}
+        {/* Generational Information */}
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="mb-5 text-base font-bold text-gray-900">
-            Genealogy Information
+            Generational Information
           </h2>
-          <div className="space-y-4">
-            {/* Relation */}
-            <Field label="Relation">
-              <form.Field name="genealogy_relation">
-                {(field) => (
-                  <Input
-                    placeholder="Father, Mother, etc."
-                    value={field.state.value as string}
-                    onChange={(e) =>
-                      field.handleChange(e.target.value as never)
-                    }
-                    onBlur={field.handleBlur}
-                  />
-                )}
-              </form.Field>
-            </Field>
-
-            {/* Name + Surname (English) */}
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Name (English)">
-                <form.Field name="genealogy_nameEn">
-                  {(field) => (
-                    <Input
-                      placeholder="Name"
-                      value={field.state.value as string}
-                      onChange={(e) =>
-                        field.handleChange(e.target.value as never)
-                      }
-                      onBlur={field.handleBlur}
-                    />
-                  )}
-                </form.Field>
-              </Field>
-              <Field label="Surname (English)">
-                <form.Field name="genealogy_surnameEn">
-                  {(field) => (
-                    <Input
-                      placeholder="Surname"
-                      value={field.state.value as string}
-                      onChange={(e) =>
-                        field.handleChange(e.target.value as never)
-                      }
-                      onBlur={field.handleBlur}
-                    />
-                  )}
-                </form.Field>
-              </Field>
-            </div>
-
-            {/* नाम + थर (Nepali) */}
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="नाम (Nepali)">
-                <form.Field name="genealogy_nameNp">
-                  {(field) => (
-                    <Input
-                      placeholder="नाम"
-                      value={field.state.value as string}
-                      onChange={(e) =>
-                        field.handleChange(e.target.value as never)
-                      }
-                      onBlur={field.handleBlur}
-                    />
-                  )}
-                </form.Field>
-              </Field>
-              <Field label="थर (Nepali)">
-                <form.Field name="genealogy_surnameNp">
-                  {(field) => (
-                    <Input
-                      placeholder="थर"
-                      value={field.state.value as string}
-                      onChange={(e) =>
-                        field.handleChange(e.target.value as never)
-                      }
-                      onBlur={field.handleBlur}
-                    />
-                  )}
-                </form.Field>
-              </Field>
-            </div>
+          <div className="space-y-6">
+            <GenerationalSection
+              form={form}
+              title="Grandfather / Grandmother"
+              nepaliTitle="बाजे / बज्यै"
+              prefix="grandfather"
+            />
+            <GenerationalSection
+              form={form}
+              title="Father / Mother"
+              nepaliTitle="बुबा / आमा"
+              prefix="father"
+            />
+            <GenerationalSection
+              form={form}
+              title="Spouse - Husband/Wife"
+              nepaliTitle="पति/पत्नी"
+              prefix="spouse"
+            />
           </div>
         </div>
 

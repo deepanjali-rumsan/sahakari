@@ -111,8 +111,8 @@ enum LoanStatus {
   UNDER_REVIEW
   APPROVED
   REJECTED
-  PAID
-  OUTSTANDING
+  ACTIVE
+  OVERDUE
 }
 
 enum AdminRole {

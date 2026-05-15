@@ -126,7 +126,12 @@ export interface User {
   id: string;
   phone: string;
   fullName: string;
-  cooperative: string;
+  cooperative:
+    | string
+    | {
+        id: string;
+        name: string;
+      };
   passbookNumber: string;
   email?: string;
   createdAt: string;

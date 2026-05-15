@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TodosRouteImport } from './routes/todos'
+import { Route as SetupCooperativeRouteImport } from './routes/setup-cooperative'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,12 +21,19 @@ import { Route as AppCustomersRouteImport } from './routes/_app/customers'
 import { Route as AppContactsRouteImport } from './routes/_app.contacts'
 import { Route as AppLoansIdRouteImport } from './routes/_app/loans/$id'
 import { Route as AppKycIdRouteImport } from './routes/_app/kyc/$id'
+import { Route as AppCustomersIdRouteImport } from './routes/_app/customers/$id'
 import { Route as AppContactsNewRouteImport } from './routes/_app.contacts.new'
+import { Route as AppAppCooperativeRouteImport } from './routes/_app/_app.cooperative'
 import { Route as AppContactsIdEditRouteImport } from './routes/_app.contacts.$id.edit'
 
 const TodosRoute = TodosRouteImport.update({
   id: '/todos',
   path: '/todos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupCooperativeRoute = SetupCooperativeRouteImport.update({
+  id: '/setup-cooperative',
+  path: '/setup-cooperative',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -77,10 +85,20 @@ const AppKycIdRoute = AppKycIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppKycRoute,
 } as any)
+const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppCustomersRoute,
+} as any)
 const AppContactsNewRoute = AppContactsNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => AppContactsRoute,
+} as any)
+const AppAppCooperativeRoute = AppAppCooperativeRouteImport.update({
+  id: '/_app/cooperative',
+  path: '/cooperative',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppContactsIdEditRoute = AppContactsIdEditRouteImport.update({
   id: '/$id/edit',
@@ -91,13 +109,16 @@ const AppContactsIdEditRoute = AppContactsIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/setup-cooperative': typeof SetupCooperativeRoute
   '/todos': typeof TodosRoute
   '/contacts': typeof AppContactsRouteWithChildren
-  '/customers': typeof AppCustomersRoute
+  '/customers': typeof AppCustomersRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/kyc': typeof AppKycRouteWithChildren
   '/loans': typeof AppLoansRouteWithChildren
+  '/cooperative': typeof AppAppCooperativeRoute
   '/contacts/new': typeof AppContactsNewRoute
+  '/customers/$id': typeof AppCustomersIdRoute
   '/kyc/$id': typeof AppKycIdRoute
   '/loans/$id': typeof AppLoansIdRoute
   '/contacts/$id/edit': typeof AppContactsIdEditRoute
@@ -105,13 +126,16 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/setup-cooperative': typeof SetupCooperativeRoute
   '/todos': typeof TodosRoute
   '/contacts': typeof AppContactsRouteWithChildren
-  '/customers': typeof AppCustomersRoute
+  '/customers': typeof AppCustomersRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/kyc': typeof AppKycRouteWithChildren
   '/loans': typeof AppLoansRouteWithChildren
+  '/cooperative': typeof AppAppCooperativeRoute
   '/contacts/new': typeof AppContactsNewRoute
+  '/customers/$id': typeof AppCustomersIdRoute
   '/kyc/$id': typeof AppKycIdRoute
   '/loans/$id': typeof AppLoansIdRoute
   '/contacts/$id/edit': typeof AppContactsIdEditRoute
@@ -121,13 +145,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/setup-cooperative': typeof SetupCooperativeRoute
   '/todos': typeof TodosRoute
   '/_app/contacts': typeof AppContactsRouteWithChildren
-  '/_app/customers': typeof AppCustomersRoute
+  '/_app/customers': typeof AppCustomersRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/kyc': typeof AppKycRouteWithChildren
   '/_app/loans': typeof AppLoansRouteWithChildren
+  '/_app/_app/cooperative': typeof AppAppCooperativeRoute
   '/_app/contacts/new': typeof AppContactsNewRoute
+  '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/kyc/$id': typeof AppKycIdRoute
   '/_app/loans/$id': typeof AppLoansIdRoute
   '/_app/contacts/$id/edit': typeof AppContactsIdEditRoute
@@ -137,13 +164,16 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/setup-cooperative'
     | '/todos'
     | '/contacts'
     | '/customers'
     | '/dashboard'
     | '/kyc'
     | '/loans'
+    | '/cooperative'
     | '/contacts/new'
+    | '/customers/$id'
     | '/kyc/$id'
     | '/loans/$id'
     | '/contacts/$id/edit'
@@ -151,13 +181,16 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/setup-cooperative'
     | '/todos'
     | '/contacts'
     | '/customers'
     | '/dashboard'
     | '/kyc'
     | '/loans'
+    | '/cooperative'
     | '/contacts/new'
+    | '/customers/$id'
     | '/kyc/$id'
     | '/loans/$id'
     | '/contacts/$id/edit'
@@ -166,13 +199,16 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/setup-cooperative'
     | '/todos'
     | '/_app/contacts'
     | '/_app/customers'
     | '/_app/dashboard'
     | '/_app/kyc'
     | '/_app/loans'
+    | '/_app/_app/cooperative'
     | '/_app/contacts/new'
+    | '/_app/customers/$id'
     | '/_app/kyc/$id'
     | '/_app/loans/$id'
     | '/_app/contacts/$id/edit'
@@ -182,6 +218,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  SetupCooperativeRoute: typeof SetupCooperativeRoute
   TodosRoute: typeof TodosRoute
 }
 
@@ -192,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/todos'
       fullPath: '/todos'
       preLoaderRoute: typeof TodosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup-cooperative': {
+      id: '/setup-cooperative'
+      path: '/setup-cooperative'
+      fullPath: '/setup-cooperative'
+      preLoaderRoute: typeof SetupCooperativeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -264,12 +308,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppKycIdRouteImport
       parentRoute: typeof AppKycRoute
     }
+    '/_app/customers/$id': {
+      id: '/_app/customers/$id'
+      path: '/$id'
+      fullPath: '/customers/$id'
+      preLoaderRoute: typeof AppCustomersIdRouteImport
+      parentRoute: typeof AppCustomersRoute
+    }
     '/_app/contacts/new': {
       id: '/_app/contacts/new'
       path: '/new'
       fullPath: '/contacts/new'
       preLoaderRoute: typeof AppContactsNewRouteImport
       parentRoute: typeof AppContactsRoute
+    }
+    '/_app/_app/cooperative': {
+      id: '/_app/_app/cooperative'
+      path: '/cooperative'
+      fullPath: '/cooperative'
+      preLoaderRoute: typeof AppAppCooperativeRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/contacts/$id/edit': {
       id: '/_app/contacts/$id/edit'
@@ -293,6 +351,18 @@ const AppContactsRouteChildren: AppContactsRouteChildren = {
 
 const AppContactsRouteWithChildren = AppContactsRoute._addFileChildren(
   AppContactsRouteChildren,
+)
+
+interface AppCustomersRouteChildren {
+  AppCustomersIdRoute: typeof AppCustomersIdRoute
+}
+
+const AppCustomersRouteChildren: AppCustomersRouteChildren = {
+  AppCustomersIdRoute: AppCustomersIdRoute,
+}
+
+const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
+  AppCustomersRouteChildren,
 )
 
 interface AppKycRouteChildren {
@@ -320,18 +390,20 @@ const AppLoansRouteWithChildren = AppLoansRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppContactsRoute: typeof AppContactsRouteWithChildren
-  AppCustomersRoute: typeof AppCustomersRoute
+  AppCustomersRoute: typeof AppCustomersRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppKycRoute: typeof AppKycRouteWithChildren
   AppLoansRoute: typeof AppLoansRouteWithChildren
+  AppAppCooperativeRoute: typeof AppAppCooperativeRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppContactsRoute: AppContactsRouteWithChildren,
-  AppCustomersRoute: AppCustomersRoute,
+  AppCustomersRoute: AppCustomersRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppKycRoute: AppKycRouteWithChildren,
   AppLoansRoute: AppLoansRouteWithChildren,
+  AppAppCooperativeRoute: AppAppCooperativeRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -340,6 +412,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  SetupCooperativeRoute: SetupCooperativeRoute,
   TodosRoute: TodosRoute,
 }
 export const routeTree = rootRouteImport

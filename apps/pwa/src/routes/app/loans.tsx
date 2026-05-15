@@ -78,6 +78,14 @@ function LoansPage() {
 
   const kycApproved = kyc?.status === "APPROVED";
 
+  // Check if there are any pending loans (not APPROVED)
+  const hasPendingLoans =
+    loans?.some(
+      (loan) => loan.status !== "APPROVED" && loan.status !== "REJECTED",
+    ) ?? false;
+
+  const canApplyForLoan = kycApproved && !hasPendingLoans;
+
   if (isLoading) {
     return (
       <div className="bg-surface flex min-h-screen items-center justify-center">
@@ -93,13 +101,15 @@ function LoansPage() {
         right={
           <TooltipWrapper
             tip={
-              kycApproved
-                ? "Apply for a new loan"
-                : "Your KYC must be approved before you can apply for a loan"
+              !kycApproved
+                ? "Your KYC must be approved before you can apply for a loan"
+                : hasPendingLoans
+                  ? "You have a pending loan. Complete or wait for approval before applying for a new loan."
+                  : "Apply for a new loan"
             }
-            disable={kycApproved}
+            disable={canApplyForLoan}
           >
-            {kycApproved ? (
+            {canApplyForLoan ? (
               <Link
                 to="/app/loans/new"
                 className="bg-primary text-on-primary hover:bg-primary-dim rounded-lg px-5 py-2 text-sm font-semibold transition active:scale-95"
@@ -133,13 +143,15 @@ function LoansPage() {
             </p>
             <TooltipWrapper
               tip={
-                kycApproved
-                  ? "Start your loan application"
-                  : "Your KYC must be approved before you can apply for a loan"
+                !kycApproved
+                  ? "Your KYC must be approved before you can apply for a loan"
+                  : hasPendingLoans
+                    ? "You have a pending loan. Complete or wait for approval before applying for a new loan."
+                    : "Start your loan application"
               }
-              disable={kycApproved}
+              disable={canApplyForLoan}
             >
-              {kycApproved ? (
+              {canApplyForLoan ? (
                 <Link
                   to="/app/loans/new"
                   className="bg-primary text-on-primary hover:bg-primary-dim mt-5 inline-block rounded-full px-6 py-2.5 text-sm font-semibold transition active:scale-95"

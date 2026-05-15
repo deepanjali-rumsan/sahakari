@@ -31,9 +31,13 @@ function Field({
   return (
     <div
       id={fieldKey ? `kyc-field-${fieldKey}` : undefined}
-      className={hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""}
+      className={
+        hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""
+      }
     >
-      <label className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}>
+      <label
+        className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}
+      >
         {label}
       </label>
       {children}
@@ -59,37 +63,14 @@ function Input({
 
 const TABS = ["Basic Info", "Mandatory", "Nominee", "Signature"] as const;
 
+// Wrapper component - handles loading and error states
 function NomineePage() {
   const token = getToken();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: kyc, isLoading } = useQuery({
     queryKey: ["kyc"],
     queryFn: () => kycApi.getMine(token),
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      kycApi.updateNominee(token, kyc!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kyc"] });
-      navigate({ to: "/app/kyc/signature" });
-    },
-  });
-  const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/nominee");
-  const errorFields = new Set(routeErrors.map((error) => error.field));
-
-  const form = useForm({
-    defaultValues: {
-      nomineeName: kyc?.nomineeName ?? "",
-      nomineeDob: kyc?.nomineeDob ? kyc.nomineeDob.split("T")[0] : "",
-      nomineeRelation: kyc?.nomineeRelation ?? "",
-      nomineeAddress: kyc?.nomineeAddress ?? "",
-      nomineeContactNumber: kyc?.nomineeContactNumber ?? "",
-      nomineeSignatureUrl: kyc?.nomineeSignatureUrl ?? "",
-      nomineePassportPhotoUrl: kyc?.nomineePassportPhotoUrl ?? "",
-    },
   });
 
   if (isLoading) {
@@ -103,7 +84,9 @@ function NomineePage() {
   if (!kyc) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
-        <p className="text-center text-gray-600">No KYC data found. Please start KYC first.</p>
+        <p className="text-center text-gray-600">
+          No KYC data found. Please start KYC first.
+        </p>
         <button
           onClick={() => navigate({ to: "/app/kyc" })}
           className="rounded-lg bg-teal-800 px-6 py-2 text-white"
@@ -114,9 +97,48 @@ function NomineePage() {
     );
   }
 
+  return <NomineeForm kyc={kyc} />;
+}
+
+// Form component - only renders when kyc data exists
+function NomineeForm({
+  kyc,
+}: {
+  kyc: NonNullable<Awaited<ReturnType<typeof kycApi.getMine>>>;
+}) {
+  const token = getToken();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const saveMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      kycApi.updateNominee(token, kyc.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kyc"] });
+      navigate({ to: "/app/kyc/signature" });
+    },
+  });
+
+  const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/nominee");
+  const errorFields = new Set(routeErrors.map((error) => error.field));
+
+  const form = useForm({
+    defaultValues: {
+      nomineeName: kyc.nomineeName ?? "",
+      nomineeDob: kyc.nomineeDob ? kyc.nomineeDob.split("T")[0] : "",
+      nomineeRelation: kyc.nomineeRelation ?? "",
+      nomineeAddress: kyc.nomineeAddress ?? "",
+      nomineeContactNumber: kyc.nomineeContactNumber ?? "",
+      nomineeSignatureUrl: kyc.nomineeSignatureUrl ?? "",
+      nomineePassportPhotoUrl: kyc.nomineePassportPhotoUrl ?? "",
+    },
+  });
+
   useEffect(() => {
     if (routeErrors.length === 0) return;
-    const element = document.getElementById(`kyc-field-${routeErrors[0].field}`);
+    const element = document.getElementById(
+      `kyc-field-${routeErrors[0].field}`,
+    );
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [routeErrors]);
 
@@ -182,7 +204,11 @@ function NomineePage() {
             Nominee Information
           </h2>
           <div className="space-y-4">
-            <Field label="Name" fieldKey="nomineeName" hasError={errorFields.has("nomineeName")}>
+            <Field
+              label="Name"
+              fieldKey="nomineeName"
+              hasError={errorFields.has("nomineeName")}
+            >
               <form.Field name="nomineeName">
                 {(field) => (
                   <Input
@@ -195,7 +221,11 @@ function NomineePage() {
               </form.Field>
             </Field>
 
-            <Field label="Date of Birth" fieldKey="nomineeDob" hasError={errorFields.has("nomineeDob")}>
+            <Field
+              label="Date of Birth"
+              fieldKey="nomineeDob"
+              hasError={errorFields.has("nomineeDob")}
+            >
               <form.Field name="nomineeDob">
                 {(field) => (
                   <Input
@@ -208,7 +238,11 @@ function NomineePage() {
               </form.Field>
             </Field>
 
-            <Field label="Relation" fieldKey="nomineeRelation" hasError={errorFields.has("nomineeRelation")}>
+            <Field
+              label="Relation"
+              fieldKey="nomineeRelation"
+              hasError={errorFields.has("nomineeRelation")}
+            >
               <form.Field name="nomineeRelation">
                 {(field) => (
                   <Input
@@ -221,7 +255,11 @@ function NomineePage() {
               </form.Field>
             </Field>
 
-            <Field label="Address" fieldKey="nomineeAddress" hasError={errorFields.has("nomineeAddress")}>
+            <Field
+              label="Address"
+              fieldKey="nomineeAddress"
+              hasError={errorFields.has("nomineeAddress")}
+            >
               <form.Field name="nomineeAddress">
                 {(field) => (
                   <Input
@@ -234,7 +272,11 @@ function NomineePage() {
               </form.Field>
             </Field>
 
-            <Field label="Contact Number" fieldKey="nomineeContactNumber" hasError={errorFields.has("nomineeContactNumber")}>
+            <Field
+              label="Contact Number"
+              fieldKey="nomineeContactNumber"
+              hasError={errorFields.has("nomineeContactNumber")}
+            >
               <form.Field name="nomineeContactNumber">
                 {(field) => (
                   <Input
@@ -249,7 +291,11 @@ function NomineePage() {
             </Field>
 
             {/* Signature upload */}
-            <Field label="Nominee's Signature" fieldKey="nomineeSignatureUrl" hasError={errorFields.has("nomineeSignatureUrl")}>
+            <Field
+              label="Nominee's Signature"
+              fieldKey="nomineeSignatureUrl"
+              hasError={errorFields.has("nomineeSignatureUrl")}
+            >
               <div className="space-y-2">
                 <form.Subscribe
                   selector={(state) => state.values.nomineeSignatureUrl}
@@ -283,7 +329,11 @@ function NomineePage() {
             </Field>
 
             {/* Passport photo upload */}
-            <Field label="Nominee's Passport Photo" fieldKey="nomineePassportPhotoUrl" hasError={errorFields.has("nomineePassportPhotoUrl")}>
+            <Field
+              label="Nominee's Passport Photo"
+              fieldKey="nomineePassportPhotoUrl"
+              hasError={errorFields.has("nomineePassportPhotoUrl")}
+            >
               <div className="space-y-2">
                 <form.Subscribe
                   selector={(state) => state.values.nomineePassportPhotoUrl}

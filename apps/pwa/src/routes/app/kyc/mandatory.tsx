@@ -31,9 +31,13 @@ function Field({
   return (
     <div
       id={fieldKey ? `kyc-field-${fieldKey}` : undefined}
-      className={hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""}
+      className={
+        hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""
+      }
     >
-      <label className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}>
+      <label
+        className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}
+      >
         {label}
       </label>
       {children}
@@ -59,37 +63,14 @@ function Input({
 
 const TABS = ["Basic Info", "Mandatory", "Nominee", "Signature"] as const;
 
+// Wrapper component - handles loading and error states
 function MandatoryPage() {
   const token = getToken();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: kyc, isLoading } = useQuery({
     queryKey: ["kyc"],
     queryFn: () => kycApi.getMine(token),
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      kycApi.updateMandatory(token, kyc!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kyc"] });
-      navigate({ to: "/app/kyc/nominee" });
-    },
-  });
-  const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/mandatory");
-  const errorFields = new Set(routeErrors.map((error) => error.field));
-
-  const form = useForm({
-    defaultValues: {
-      mandatoryName: kyc?.mandatoryName ?? "",
-      mandatoryDob: kyc?.mandatoryDob ? kyc.mandatoryDob.split("T")[0] : "",
-      mandatoryRelation: kyc?.mandatoryRelation ?? "",
-      mandatoryAddress: kyc?.mandatoryAddress ?? "",
-      mandatoryContactNumber: kyc?.mandatoryContactNumber ?? "",
-      mandatorySignatureUrl: kyc?.mandatorySignatureUrl ?? "",
-      mandatoryPassportPhotoUrl: kyc?.mandatoryPassportPhotoUrl ?? "",
-    },
   });
 
   if (isLoading) {
@@ -103,7 +84,9 @@ function MandatoryPage() {
   if (!kyc) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
-        <p className="text-center text-gray-600">No KYC data found. Please start KYC first.</p>
+        <p className="text-center text-gray-600">
+          No KYC data found. Please start KYC first.
+        </p>
         <button
           onClick={() => navigate({ to: "/app/kyc" })}
           className="rounded-lg bg-teal-800 px-6 py-2 text-white"
@@ -114,9 +97,48 @@ function MandatoryPage() {
     );
   }
 
+  return <MandatoryForm kyc={kyc} />;
+}
+
+// Form component - only renders when kyc data exists
+function MandatoryForm({
+  kyc,
+}: {
+  kyc: NonNullable<Awaited<ReturnType<typeof kycApi.getMine>>>;
+}) {
+  const token = getToken();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const saveMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      kycApi.updateMandatory(token, kyc.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kyc"] });
+      navigate({ to: "/app/kyc/nominee" });
+    },
+  });
+
+  const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/mandatory");
+  const errorFields = new Set(routeErrors.map((error) => error.field));
+
+  const form = useForm({
+    defaultValues: {
+      mandatoryName: kyc.mandatoryName ?? "",
+      mandatoryDob: kyc.mandatoryDob ? kyc.mandatoryDob.split("T")[0] : "",
+      mandatoryRelation: kyc.mandatoryRelation ?? "",
+      mandatoryAddress: kyc.mandatoryAddress ?? "",
+      mandatoryContactNumber: kyc.mandatoryContactNumber ?? "",
+      mandatorySignatureUrl: kyc.mandatorySignatureUrl ?? "",
+      mandatoryPassportPhotoUrl: kyc.mandatoryPassportPhotoUrl ?? "",
+    },
+  });
+
   useEffect(() => {
     if (routeErrors.length === 0) return;
-    const element = document.getElementById(`kyc-field-${routeErrors[0].field}`);
+    const element = document.getElementById(
+      `kyc-field-${routeErrors[0].field}`,
+    );
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [routeErrors]);
 
@@ -182,7 +204,11 @@ function MandatoryPage() {
             Mandatory Nominee Information
           </h2>
           <div className="space-y-4">
-            <Field label="Name" fieldKey="mandatoryName" hasError={errorFields.has("mandatoryName")}>
+            <Field
+              label="Name"
+              fieldKey="mandatoryName"
+              hasError={errorFields.has("mandatoryName")}
+            >
               <form.Field name="mandatoryName">
                 {(field) => (
                   <Input
@@ -195,7 +221,11 @@ function MandatoryPage() {
               </form.Field>
             </Field>
 
-            <Field label="Date of Birth" fieldKey="mandatoryDob" hasError={errorFields.has("mandatoryDob")}>
+            <Field
+              label="Date of Birth"
+              fieldKey="mandatoryDob"
+              hasError={errorFields.has("mandatoryDob")}
+            >
               <form.Field name="mandatoryDob">
                 {(field) => (
                   <Input
@@ -208,7 +238,11 @@ function MandatoryPage() {
               </form.Field>
             </Field>
 
-            <Field label="Relation" fieldKey="mandatoryRelation" hasError={errorFields.has("mandatoryRelation")}>
+            <Field
+              label="Relation"
+              fieldKey="mandatoryRelation"
+              hasError={errorFields.has("mandatoryRelation")}
+            >
               <form.Field name="mandatoryRelation">
                 {(field) => (
                   <Input
@@ -221,7 +255,11 @@ function MandatoryPage() {
               </form.Field>
             </Field>
 
-            <Field label="Address" fieldKey="mandatoryAddress" hasError={errorFields.has("mandatoryAddress")}>
+            <Field
+              label="Address"
+              fieldKey="mandatoryAddress"
+              hasError={errorFields.has("mandatoryAddress")}
+            >
               <form.Field name="mandatoryAddress">
                 {(field) => (
                   <Input
@@ -234,7 +272,11 @@ function MandatoryPage() {
               </form.Field>
             </Field>
 
-            <Field label="Contact Number" fieldKey="mandatoryContactNumber" hasError={errorFields.has("mandatoryContactNumber")}>
+            <Field
+              label="Contact Number"
+              fieldKey="mandatoryContactNumber"
+              hasError={errorFields.has("mandatoryContactNumber")}
+            >
               <form.Field name="mandatoryContactNumber">
                 {(field) => (
                   <Input
@@ -249,7 +291,11 @@ function MandatoryPage() {
             </Field>
 
             {/* Signature upload */}
-            <Field label="Signature (600x600 px)" fieldKey="mandatorySignatureUrl" hasError={errorFields.has("mandatorySignatureUrl")}>
+            <Field
+              label="Signature (600x600 px)"
+              fieldKey="mandatorySignatureUrl"
+              hasError={errorFields.has("mandatorySignatureUrl")}
+            >
               <div className="space-y-2">
                 <form.Subscribe
                   selector={(state) => state.values.mandatorySignatureUrl}
@@ -288,7 +334,9 @@ function MandatoryPage() {
               hasError={errorFields.has("mandatoryPassportPhotoUrl")}
             >
               <div className="space-y-2">
-                <form.Subscribe selector={(state) => state.values.mandatoryPassportPhotoUrl}>
+                <form.Subscribe
+                  selector={(state) => state.values.mandatoryPassportPhotoUrl}
+                >
                   {(url) =>
                     url && (
                       <img

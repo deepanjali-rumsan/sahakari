@@ -55,6 +55,17 @@ export class CooperativeService {
       }
     }
 
+    if (dto.email) {
+      const existingByEmail = await this.prisma.cooperative.findUnique({
+        where: { email: dto.email },
+      });
+      if (existingByEmail && existingByEmail.id !== admin.cooperativeId) {
+        throw new BadRequestException(
+          'Cooperative with this email already exists',
+        );
+      }
+    }
+
     // If admin already has a cooperative, update it
     if (admin.cooperativeId) {
       const cooperative = await this.prisma.cooperative.update({

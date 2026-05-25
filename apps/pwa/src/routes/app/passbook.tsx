@@ -4,6 +4,7 @@ import { BookOpen, TrendingUp } from "lucide-react";
 
 import { createPassbookApi } from "@rs/sdk";
 
+import { AppHeader } from "../../components/app-header";
 import { getToken } from "../../lib/storage";
 
 export const Route = createFileRoute("/app/passbook")({
@@ -23,22 +24,20 @@ function PassbookPage() {
   });
 
   return (
-    <div className="min-h-screen bg-surface pb-32">
-      <header className="sticky top-0 z-40 flex items-center px-6 h-16 bg-surface/80 backdrop-blur-xl">
-        <h1 className="font-headline text-xl font-bold text-on-surface">Passbook</h1>
-      </header>
+    <div className="bg-surface min-h-screen">
+      <AppHeader title="Passbook" />
 
-      <div className="px-6 pt-2 space-y-6">
+      <div className="space-y-6 px-6 pt-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
           </div>
         ) : (
           <>
             {/* Balance Hero Card */}
-            <div className="rounded-xl bg-linear-to-br from-primary to-primary-dim p-8 text-on-primary shadow-lg flex flex-col justify-between aspect-4/3">
+            <div className="from-primary to-primary-dim text-on-primary flex aspect-4/3 flex-col justify-between rounded-xl bg-linear-to-br p-8 shadow-lg">
               <div>
-                <div className="flex items-center gap-2 mb-4 opacity-80">
+                <div className="mb-4 flex items-center gap-2 opacity-80">
                   <BookOpen size={16} />
                   <span className="text-xs font-medium">Available Balance</span>
                 </div>
@@ -55,24 +54,27 @@ function PassbookPage() {
 
             {/* Transaction History placeholder */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-headline font-semibold text-on-surface">Transaction History</h2>
-                <span className="text-xs bg-secondary-container text-on-secondary-container rounded-full px-3 py-1 font-medium">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-headline text-on-surface font-semibold">
+                  Transaction History
+                </h2>
+                <span className="bg-secondary-container text-on-secondary-container rounded-full px-3 py-1 text-xs font-medium">
                   Coming Soon
                 </span>
               </div>
 
-              <div className="rounded-xl bg-surface-container-low p-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-surface-container">
+              <div className="bg-surface-container-low rounded-xl p-8 text-center">
+                <div className="bg-surface-container mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
                   <BookOpen size={24} className="text-on-surface-variant" />
                 </div>
-                <p className="text-sm font-semibold text-on-surface">
+                <p className="text-on-surface text-sm font-semibold">
                   Passbook features are under development
                 </p>
-                <p className="mt-2 text-xs text-on-surface-variant leading-relaxed">
-                  Transaction history, mini-statements, and digital passbook will be available soon.
+                <p className="text-on-surface-variant mt-2 text-xs leading-relaxed">
+                  Transaction history, mini-statements, and digital passbook
+                  will be available soon.
                 </p>
-                <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-tertiary-container px-4 py-1.5 text-xs font-medium text-on-tertiary-container">
+                <div className="bg-tertiary-container text-on-tertiary-container mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium">
                   <TrendingUp size={12} /> LA-011 Placeholder
                 </div>
               </div>
@@ -80,7 +82,7 @@ function PassbookPage() {
 
             {/* Upcoming features */}
             <section className="space-y-3">
-              <h3 className="font-headline text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+              <h3 className="font-headline text-on-surface-variant text-xs font-semibold tracking-widest uppercase">
                 Upcoming Features
               </h3>
               {[
@@ -91,10 +93,12 @@ function PassbookPage() {
               ].map((feat) => (
                 <div
                   key={feat}
-                  className="flex items-center gap-3 rounded-xl bg-surface-container-lowest px-5 py-4 shadow-sm"
+                  className="bg-surface-container-lowest flex items-center gap-3 rounded-xl px-5 py-4 shadow-sm"
                 >
-                  <div className="h-2 w-2 rounded-full bg-primary-container shrink-0" />
-                  <span className="text-sm text-on-surface-variant">{feat}</span>
+                  <div className="bg-primary-container h-2 w-2 shrink-0 rounded-full" />
+                  <span className="text-on-surface-variant text-sm">
+                    {feat}
+                  </span>
                 </div>
               ))}
             </section>

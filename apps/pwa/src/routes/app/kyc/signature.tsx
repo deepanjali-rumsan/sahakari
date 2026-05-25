@@ -31,9 +31,13 @@ function Field({
   return (
     <div
       id={fieldKey ? `kyc-field-${fieldKey}` : undefined}
-      className={hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""}
+      className={
+        hasError ? "rounded-2xl border border-red-300 bg-red-50 p-3" : ""
+      }
     >
-      <label className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}>
+      <label
+        className={`mb-1 block text-sm font-semibold ${hasError ? "text-red-700" : "text-gray-800"}`}
+      >
         {label}
       </label>
       {children}
@@ -90,34 +94,14 @@ function UploadField({
 
 const TABS = ["Basic Info", "Mandatory", "Nominee", "Signature"] as const;
 
+// Wrapper component - handles loading and error states
 function SignaturePage() {
   const token = getToken();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: kyc, isLoading } = useQuery({
     queryKey: ["kyc"],
     queryFn: () => kycApi.getMine(token),
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: Record<string, unknown>) =>
-      kycApi.updateSignature(token, kyc!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["kyc"] });
-      navigate({ to: "/app/kyc" });
-    },
-  });
-  const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/signature");
-  const errorFields = new Set(routeErrors.map((error) => error.field));
-
-  const form = useForm({
-    defaultValues: {
-      digitalSignatureUrl: kyc?.digitalSignatureUrl ?? "",
-      rightThumbUrl: kyc?.rightThumbUrl ?? "",
-      leftThumbUrl: kyc?.leftThumbUrl ?? "",
-      passportPhotoUrl: kyc?.passportPhotoUrl ?? "",
-    },
   });
 
   if (isLoading) {
@@ -131,7 +115,9 @@ function SignaturePage() {
   if (!kyc) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50">
-        <p className="text-center text-gray-600">No KYC data found. Please start KYC first.</p>
+        <p className="text-center text-gray-600">
+          No KYC data found. Please start KYC first.
+        </p>
         <button
           onClick={() => navigate({ to: "/app/kyc" })}
           className="rounded-lg bg-teal-800 px-6 py-2 text-white"
@@ -142,9 +128,45 @@ function SignaturePage() {
     );
   }
 
+  return <SignatureForm kyc={kyc} />;
+}
+
+// Form component - only renders when kyc data exists
+function SignatureForm({
+  kyc,
+}: {
+  kyc: NonNullable<Awaited<ReturnType<typeof kycApi.getMine>>>;
+}) {
+  const token = getToken();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const saveMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      kycApi.updateSignature(token, kyc.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["kyc"] });
+      navigate({ to: "/app/kyc" });
+    },
+  });
+
+  const routeErrors = getKycSubmitErrorsForRoute("/app/kyc/signature");
+  const errorFields = new Set(routeErrors.map((error) => error.field));
+
+  const form = useForm({
+    defaultValues: {
+      digitalSignatureUrl: kyc.digitalSignatureUrl ?? "",
+      rightThumbUrl: kyc.rightThumbUrl ?? "",
+      leftThumbUrl: kyc.leftThumbUrl ?? "",
+      passportPhotoUrl: kyc.passportPhotoUrl ?? "",
+    },
+  });
+
   useEffect(() => {
     if (routeErrors.length === 0) return;
-    const element = document.getElementById(`kyc-field-${routeErrors[0].field}`);
+    const element = document.getElementById(
+      `kyc-field-${routeErrors[0].field}`,
+    );
     element?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [routeErrors]);
 

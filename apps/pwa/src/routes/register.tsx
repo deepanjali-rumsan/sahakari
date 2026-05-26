@@ -15,6 +15,7 @@ const authApi = createAuthApi(import.meta.env["VITE_API_URL"] ?? "");
 function RegisterPage() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -41,7 +42,7 @@ function RegisterPage() {
         });
         setStorageItem("token", res.accessToken);
         setStorageItem("user", JSON.stringify(res.user));
-        navigate({ to: "/app/dashboard" });
+        setSuccess(true);
       } catch (err: any) {
         setError(err.message ?? "Registration failed");
       }
@@ -50,6 +51,48 @@ function RegisterPage() {
 
   const inputClass =
     "w-full rounded-xl bg-surface-container-low px-4 py-3 text-sm text-on-surface outline-none ring-1 ring-outline-variant/50 focus:ring-2 focus:ring-primary/40 transition placeholder:text-on-surface-variant/50";
+
+  if (success) {
+    return (
+      <div className="bg-surface flex min-h-screen flex-col items-center justify-center px-6 pb-10">
+        <div className="bg-surface-container-lowest w-full max-w-sm space-y-6 rounded-xl p-7 text-center shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
+          <div className="space-y-2">
+            <div className="flex justify-center">
+              <div className="bg-primary/20 rounded-full p-3">
+                <svg
+                  className="text-primary h-8 w-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h1 className="font-headline text-on-surface text-2xl font-bold">
+              Registration Successful!
+            </h1>
+            <p className="text-on-surface-variant text-sm">
+              Your account has been created. You can now login with your
+              credentials.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate({ to: "/login" })}
+            className="bg-primary text-on-primary hover:bg-primary-dim w-full rounded-lg py-3.5 text-sm font-semibold transition active:scale-95"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface flex min-h-screen flex-col pb-10">

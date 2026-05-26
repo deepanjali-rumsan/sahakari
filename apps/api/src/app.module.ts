@@ -10,6 +10,7 @@ import { NotificationModule } from './notification/notification.module';
 import { KycModule } from './kyc/kyc.module';
 import { LoanModule } from './loan/loan.module';
 import { PassbookModule } from './passbook/passbook.module';
+import { CooperativeModule } from './cooperative/cooperative.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminKycController } from './kyc/admin-kyc.controller';
@@ -29,6 +30,7 @@ import { CustomerController } from './customer.controller';
     KycModule,
     LoanModule,
     PassbookModule,
+    CooperativeModule,
   ],
   controllers: [
     AppController,

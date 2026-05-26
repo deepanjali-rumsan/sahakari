@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
@@ -33,6 +33,65 @@ export class CustomerController {
       skip: (pageNum - 1) * limitNum,
       take: limitNum,
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  @Get(':id')
+  getById(@Param('id') id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        phone: true,
+        fullName: true,
+        email: true,
+        passbookNumber: true,
+        createdAt: true,
+        cooperative: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            address: true,
+          },
+        },
+        kyc: {
+          select: {
+            status: true,
+            citizenshipNumber: true,
+            dob: true,
+            fullNameEn: true,
+            fullNameNp: true,
+            genealogyJson: true,
+            provinceId: true,
+            districtId: true,
+            municipalityId: true,
+            wardNumber: true,
+            tole: true,
+            submittedAt: true,
+            reviewedAt: true,
+            rejectionReason: true,
+            district: true,
+            municipality: true,
+          },
+        },
+        loanApplications: {
+          select: {
+            id: true,
+            referenceNumber: true,
+            loanAmount: true,
+            purpose: true,
+            duration: true,
+            status: true,
+            submittedAt: true,
+            reviewedAt: true,
+          },
+          orderBy: { submittedAt: 'desc' },
+        },
+        _count: {
+          select: { loanApplications: true },
+        },
+      },
     });
   }
 

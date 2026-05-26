@@ -1,9 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  createRootRoute,
-  Link,
-  Outlet,
-} from "@tanstack/react-router";
+import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 
 import { configureSDK } from "@rs/sdk";
 
@@ -37,13 +33,15 @@ function RootComponent() {
 function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
-      <h1 className="font-headline text-2xl font-semibold text-on-surface">Page not found</h1>
-      <p className="text-sm text-on-surface-variant">
+      <h1 className="font-headline text-on-surface text-2xl font-semibold">
+        Page not found
+      </h1>
+      <p className="text-on-surface-variant text-sm">
         The page you requested does not exist.
       </p>
       <Link
         to="/"
-        className="text-sm font-medium text-primary underline underline-offset-4"
+        className="text-primary text-sm font-medium underline underline-offset-4"
       >
         Back to home
       </Link>

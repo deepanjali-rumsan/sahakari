@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -15,7 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { createKycApi } from "@rs/sdk";
+import { createKycApi, createLoanApi } from "@rs/sdk";
 
 import type { KycSubmitFieldError } from "../../lib/kyc-submit-errors";
 import { AppHeader } from "../../components/app-header";
@@ -56,6 +56,7 @@ function KycPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const kycApi = createKycApi(apiUrl);
+  const loanApi = createLoanApi(apiUrl);
   const [submitErrors, setSubmitErrors] = useState<KycSubmitFieldError[]>([]);
 
   const { data: kyc, isLoading } = useQuery({
@@ -63,11 +64,23 @@ function KycPage() {
     queryFn: () => kycApi.getMine(token),
   });
 
-  // Auto-redirect to basic-info when KYC exists but has never been filled
-  if (!isLoading && kyc?.status === "DRAFT" && !kyc.fullNameEn) {
-    navigate({ to: "/app/kyc/basic-info" });
-    return null;
-  }
+  const { data: loans } = useQuery({
+    queryKey: ["loans"],
+    queryFn: () => loanApi.listMine(token),
+  });
+
+  // Check if there are any pending loans (not APPROVED or REJECTED)
+  const hasPendingLoans =
+    loans?.some(
+      (loan) => loan.status !== "APPROVED" && loan.status !== "REJECTED",
+    ) ?? false;
+
+  // Use useEffect for navigation side-effect instead of doing it during render
+  useEffect(() => {
+    if (!isLoading && kyc?.status === "DRAFT" && !kyc.fullNameEn) {
+      navigate({ to: "/app/kyc/basic-info" });
+    }
+  }, [isLoading, kyc?.status, kyc?.fullNameEn, navigate]);
 
   const createMutation = useMutation({
     mutationFn: () => kycApi.create(token),
@@ -272,7 +285,7 @@ function KycPage() {
             status === "UNDER_REVIEW" ||
             status === "APPROVED") && (
             <div>
-              {status === "APPROVED" ? (
+              {status === "APPROVED" && !hasPendingLoans ? (
                 <TooltipWrapper tip="Start your loan application process">
                   <Link
                     to="/app/loans/new"
@@ -282,7 +295,13 @@ function KycPage() {
                   </Link>
                 </TooltipWrapper>
               ) : (
-                <TooltipWrapper tip="Your KYC must be approved before you can apply for a loan">
+                <TooltipWrapper
+                  tip={
+                    status !== "APPROVED"
+                      ? "Your KYC must be approved before you can apply for a loan"
+                      : "You have a pending loan. Complete or wait for approval before applying for a new loan."
+                  }
+                >
                   <button
                     type="button"
                     disabled

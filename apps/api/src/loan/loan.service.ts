@@ -26,7 +26,12 @@ export class LoanService {
   }
 
   private sanitizeNumericFields(data: any): any {
-    const numericFields = ['loanAmount', 'guaranteeAmount', 'age'];
+    const numericFields = [
+      'loanAmount',
+      'guaranteeAmount',
+      'age',
+      'wardNumber',
+    ];
     const sanitized = { ...data };
 
     numericFields.forEach((field) => {
@@ -206,6 +211,25 @@ export class LoanService {
             fullName: true,
             cooperative: true,
             passbookNumber: true,
+            kyc: {
+              select: {
+                digitalSignatureUrl: true,
+                rightThumbUrl: true,
+                leftThumbUrl: true,
+              },
+            },
+          },
+        },
+        district: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        municipality: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },

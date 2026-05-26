@@ -45,6 +45,7 @@ export function createAuthApi(baseUrl: string) {
       phone: string;
       fullName: string;
       cooperative: string;
+      cooperativeId?: string;
       passbookNumber: string;
       password: string;
     }): Promise<AuthToken> => {

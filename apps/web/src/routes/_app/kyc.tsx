@@ -1,4 +1,9 @@
-import { createFileRoute, Link, Outlet, useMatches } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useMatches,
+} from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Eye, ChevronLeft, FileText } from 'lucide-react'
@@ -95,7 +100,10 @@ function KycPage() {
                     {kyc.user?.fullName ?? '—'}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {kyc.user?.phone ?? ''} · {kyc.user?.cooperative ?? ''}
+                    {kyc.user?.phone ?? ''} ·{' '}
+                    {typeof kyc.user?.cooperative === 'string'
+                      ? kyc.user.cooperative
+                      : (kyc.user?.cooperative?.name ?? '')}
                   </p>
                 </div>
               </div>

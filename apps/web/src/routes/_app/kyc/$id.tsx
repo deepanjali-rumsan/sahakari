@@ -71,7 +71,7 @@ function KycDetailPage() {
     DRAFT: 'bg-gray-100 text-gray-600',
   }
 
-  const tabs = ['Basic Info', 'Mandatory / Nominee', 'Signature']
+  const tabs = ['Basic Info', 'Mandatory', 'Nominee', 'Signature']
 
   if (isLoading)
     return <div className="p-8 text-center text-gray-400">Loading...</div>
@@ -116,7 +116,9 @@ function KycDetailPage() {
           <div>
             <span className="text-xs text-gray-400 block">Cooperative</span>
             <span className="text-sm font-medium">
-              {kyc.user?.cooperative ?? '—'}
+              {typeof kyc.user?.cooperative === 'string'
+                ? kyc.user.cooperative
+                : (kyc.user?.cooperative?.name ?? '—')}
             </span>
           </div>
           <div>
@@ -142,33 +144,121 @@ function KycDetailPage() {
 
       <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
         {activeTab === 0 && (
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              ['Full Name (EN)', kyc.fullNameEn],
-              ['Full Name (NP)', kyc.fullNameNp],
-              ['Passbook No.', kyc.passbookNo],
-              ['Member Type', kyc.memberType],
-              ['Date of Birth', kyc.dob ? new Date(kyc.dob).toLocaleDateString() : null],
-              ['Gender', kyc.gender],
-              ['Nationality', kyc.nationality],
-              ['Religion', kyc.religion],
-              ['Occupation', kyc.occupation],
-              ['Education', kyc.education],
-              ['District', kyc.district?.name],
-              ['Municipality', kyc.municipality?.name],
-              ['Ward No.', kyc.wardNumber],
-              ['Tole', kyc.tole],
-              ['Contact Number', kyc.contactNumber],
-              ['Mobile Number', kyc.mobileNumber],
-              ['Email', kyc.email],
-            ].map(([label, value]) =>
-              value ? (
-                <div key={label}>
-                  <span className="text-xs text-gray-400 block">{label}</span>
-                  <span className="text-sm">{value}</span>
-                </div>
-              ) : null,
-            )}
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                ['Full Name (EN)', kyc.fullNameEn],
+                ['Full Name (NP)', kyc.fullNameNp],
+                ['Passbook No.', kyc.passbookNo],
+                ['Member Type', kyc.memberType],
+                [
+                  'Date of Birth',
+                  kyc.dob ? new Date(kyc.dob).toLocaleDateString() : null,
+                ],
+                ['Gender', kyc.gender],
+                ['Nationality', kyc.nationality],
+                ['Religion', kyc.religion],
+                ['Occupation', kyc.occupation],
+                ['Education', kyc.education],
+                ['District', kyc.district?.name],
+                ['Municipality', kyc.municipality?.name],
+                ['Ward No.', kyc.wardNumber],
+                ['Tole', kyc.tole],
+                ['Contact Number', kyc.contactNumber],
+                ['Mobile Number', kyc.mobileNumber],
+                ['Email', kyc.email],
+              ].map(([label, value]) =>
+                value ? (
+                  <div key={label}>
+                    <span className="text-xs text-gray-400 block">{label}</span>
+                    <span className="text-sm">{value}</span>
+                  </div>
+                ) : null,
+              )}
+            </div>
+
+            {/* Generational Information */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Generational Information
+              </h3>
+              {(() => {
+                const genealogyData = kyc.genealogyJson as Array<{
+                  relation?: string
+                  nameEn?: string
+                  surnameEn?: string
+                  nameNp?: string
+                  surnameNp?: string
+                }> | null
+
+                if (!genealogyData || genealogyData.length === 0) {
+                  return (
+                    <p className="text-sm text-gray-400">
+                      No generational information provided.
+                    </p>
+                  )
+                }
+
+                const generationalRelations = [
+                  'Grandfather',
+                  'Father',
+                  'Spouse',
+                ]
+                const generationalData = genealogyData.filter((item) =>
+                  generationalRelations.includes(item.relation ?? ''),
+                )
+
+                if (generationalData.length === 0) {
+                  return (
+                    <p className="text-sm text-gray-400">
+                      No generational information provided.
+                    </p>
+                  )
+                }
+
+                return generationalData.map((item, idx) => (
+                  <div key={idx} className="rounded-xl bg-gray-50 p-4 mb-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      {item.relation}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {item.nameEn && (
+                        <div>
+                          <span className="text-xs text-gray-400 block">
+                            Name (English)
+                          </span>
+                          <span className="text-sm">{item.nameEn}</span>
+                        </div>
+                      )}
+                      {item.surnameEn && (
+                        <div>
+                          <span className="text-xs text-gray-400 block">
+                            Surname (English)
+                          </span>
+                          <span className="text-sm">{item.surnameEn}</span>
+                        </div>
+                      )}
+                      {item.nameNp && (
+                        <div>
+                          <span className="text-xs text-gray-400 block">
+                            नाम (Nepali)
+                          </span>
+                          <span className="text-sm">{item.nameNp}</span>
+                        </div>
+                      )}
+                      {item.surnameNp && (
+                        <div>
+                          <span className="text-xs text-gray-400 block">
+                            थर (Nepali)
+                          </span>
+                          <span className="text-sm">{item.surnameNp}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              })()}
+            </div>
           </div>
         )}
         {activeTab === 1 && (
@@ -181,34 +271,21 @@ function KycDetailPage() {
                 {[
                   ['Citizenship No.', kyc.citizenshipNumber],
                   ['Citizenship Issue District', kyc.citizenshipIssuedDistrict],
-                  ['Citizenship Issue Date', kyc.citizenshipIssuedDate ? new Date(kyc.citizenshipIssuedDate).toLocaleDateString() : null],
+                  [
+                    'Citizenship Issue Date',
+                    kyc.citizenshipIssuedDate
+                      ? new Date(kyc.citizenshipIssuedDate).toLocaleDateString()
+                      : null,
+                  ],
                   ['NIN ID Number', kyc.ninIdNumber],
                   ['NIN Issue District', kyc.ninIssuedDistrict],
-                  ['NIN Issue Date', kyc.ninIssuedDate ? new Date(kyc.ninIssuedDate).toLocaleDateString() : null],
+                  [
+                    'NIN Issue Date',
+                    kyc.ninIssuedDate
+                      ? new Date(kyc.ninIssuedDate).toLocaleDateString()
+                      : null,
+                  ],
                   ['Monthly Income', kyc.monthlyIncome],
-                ].map(([label, value]) =>
-                  value ? (
-                    <div key={label}>
-                      <span className="text-xs text-gray-400 block">
-                        {label}
-                      </span>
-                      <span className="text-sm">{value}</span>
-                    </div>
-                  ) : null,
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-600 mb-3">
-                Nominee Info
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  ['Nominee Name', kyc.nomineeName],
-                  ['Nominee Relation', kyc.nomineeRelation],
-                  ['Nominee Phone', kyc.nomineeContactNumber],
-                  ['Nominee Address', kyc.nomineeAddress],
-                  ['Nominee DOB', kyc.nomineeDob ? new Date(kyc.nomineeDob).toLocaleDateString() : null],
                 ].map(([label, value]) =>
                   value ? (
                     <div key={label}>
@@ -224,6 +301,38 @@ function KycDetailPage() {
           </div>
         )}
         {activeTab === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-600 mb-3">
+                Nominee Info
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  ['Nominee Name', kyc.nomineeName],
+                  ['Nominee Relation', kyc.nomineeRelation],
+                  ['Nominee Phone', kyc.nomineeContactNumber],
+                  ['Nominee Address', kyc.nomineeAddress],
+                  [
+                    'Nominee DOB',
+                    kyc.nomineeDob
+                      ? new Date(kyc.nomineeDob).toLocaleDateString()
+                      : null,
+                  ],
+                ].map(([label, value]) =>
+                  value ? (
+                    <div key={label}>
+                      <span className="text-xs text-gray-400 block">
+                        {label}
+                      </span>
+                      <span className="text-sm">{value}</span>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {activeTab === 3 && (
           <div className="space-y-4">
             {kyc.digitalSignatureUrl && (
               <div>
@@ -281,52 +390,61 @@ function KycDetailPage() {
                   No signature or document images uploaded.
                 </p>
               )}
+
+            {/* Approve/Reject buttons inside Signature tab */}
+            <div className="pt-6 border-t border-gray-200 mt-6">
+              {kyc.rejectionReason && (
+                <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-4">
+                  <p className="text-sm font-medium text-red-700">
+                    Rejection Reason: {kyc.rejectionReason}
+                  </p>
+                </div>
+              )}
+
+              {reviewError && (
+                <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 flex items-center justify-between">
+                  <p className="text-sm text-red-700">{reviewError}</p>
+                  <button
+                    onClick={() => setReviewError(null)}
+                    className="text-red-400 hover:text-red-600 text-xs ml-4"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+
+              {kyc.status === 'PENDING' || kyc.status === 'UNDER_REVIEW' ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setReviewError(null)
+                      reviewMutation.mutate({ action: 'APPROVED' })
+                    }}
+                    disabled={reviewMutation.isPending}
+                    className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <CheckCircle2 size={16} /> Approve
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReviewError(null)
+                      setShowRejectModal(true)
+                    }}
+                    disabled={reviewMutation.isPending}
+                    className="flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    <XCircle size={16} /> Reject
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  This KYC has already been {kyc.status?.toLowerCase()}.
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
-
-      {kyc.rejectionReason && (
-        <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
-          <p className="text-sm font-medium text-red-700">
-            Rejection Reason: {kyc.rejectionReason}
-          </p>
-        </div>
-      )}
-
-      {reviewError && (
-        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 flex items-center justify-between">
-          <p className="text-sm text-red-700">{reviewError}</p>
-          <button
-            onClick={() => setReviewError(null)}
-            className="text-red-400 hover:text-red-600 text-xs ml-4"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {kyc.status === 'PENDING' || kyc.status === 'UNDER_REVIEW' ? (
-        <div className="flex gap-3">
-          <button
-            onClick={() => { setReviewError(null); reviewMutation.mutate({ action: 'APPROVED' }) }}
-            disabled={reviewMutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            <CheckCircle2 size={16} /> Approve
-          </button>
-          <button
-            onClick={() => { setReviewError(null); setShowRejectModal(true) }}
-            disabled={reviewMutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            <XCircle size={16} /> Reject
-          </button>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-400 italic">
-          This KYC has already been {kyc.status?.toLowerCase()}.
-        </p>
-      )}
 
       {showRejectModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from '@tanstack/react-router'
-import { Settings, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Settings, ChevronLeft, ChevronRight, User } from 'lucide-react'
 import { cn } from '@rs/ui'
 
 export interface SidebarNavItem {
@@ -14,8 +14,12 @@ export interface SidebarNavItem {
 
 export interface ExpandableSidebarProps {
   navItems?: SidebarNavItem[]
-  /** Avatar URL shown at the bottom */
-  avatar?: string
+  /** User name shown at the bottom */
+  userName?: string
+  /** User email shown at the bottom */
+  userEmail?: string
+  /** Cooperative logo URL */
+  logoUrl?: string | null
   /** Footer label rendered vertically */
   footerLabel?: string
   className?: string
@@ -23,8 +27,8 @@ export interface ExpandableSidebarProps {
   onToggle?: () => void
 }
 
-const activeClass = 'text-white bg-orange-500'
-const inactiveClass = 'text-gray-400 hover:text-white hover:bg-gray-700'
+const activeClass = 'text-black bg-green-200'
+const inactiveClass = 'text-[#d6f7ea] hover:text-white hover:bg-[#005f47]'
 
 function AppLogo(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -54,7 +58,9 @@ function AppLogo(props: React.SVGProps<SVGSVGElement>) {
 
 export function ExpandableSidebar({
   navItems = [],
-  avatar,
+  userName,
+  userEmail,
+  logoUrl,
   footerLabel,
   className,
   isExpanded = false,
@@ -63,15 +69,23 @@ export function ExpandableSidebar({
   return (
     <div
       className={cn(
-        'bg-[#1a1a1a] flex flex-col py-4 gap-2 flex-shrink-0 transition-all duration-300 ease-in-out relative',
+        'bg-[#0e6c52] flex flex-col py-4 gap-2 shrink-0 transition-all duration-300 ease-in-out relative',
         isExpanded ? 'w-64' : 'w-16',
         className,
       )}
     >
       {/* Logo and Title */}
       <div className="flex items-center px-4 mb-4 h-10">
-        <div className="text-white flex h-10 w-10 items-center justify-center flex-shrink-0">
-          <AppLogo className="h-8 w-8 text-white" />
+        <div className="text-white flex h-10 w-10 items-center justify-center shrink-0">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt="Cooperative Logo"
+              className="h-10 w-10 object-contain rounded"
+            />
+          ) : (
+            <AppLogo className="h-8 w-8 text-white" />
+          )}
         </div>
         {isExpanded && (
           <div className="ml-3 overflow-hidden">
@@ -86,7 +100,7 @@ export function ExpandableSidebar({
       {onToggle && (
         <button
           onClick={onToggle}
-          className="absolute top-4 -right-3 bg-[#1a1a1a] border border-gray-600 text-gray-400 hover:text-white rounded-full p-1 hover:bg-gray-700 transition-colors z-10"
+          className="absolute top-4 -right-3 bg-[#0e6c52] border border-[#2c876e] text-[#d6f7ea] hover:text-white rounded-full p-1 hover:bg-[#005f47] transition-colors z-10"
         >
           {isExpanded ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
         </button>
@@ -110,14 +124,14 @@ export function ExpandableSidebar({
                 ),
               }}
             >
-              <div className="flex-shrink-0">{item.icon}</div>
+              <div className="shrink-0">{item.icon}</div>
               {isExpanded && (
                 <span className="font-medium whitespace-nowrap overflow-hidden">
                   {item.label}
                 </span>
               )}
               {item.badge != null && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 border border-[#1a1a1a] rounded-full text-[10px] flex items-center justify-center text-white">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#005f47] border border-[#0e6c52] rounded-full text-[10px] flex items-center justify-center text-white">
                   {item.badge}
                 </span>
               )}
@@ -131,14 +145,14 @@ export function ExpandableSidebar({
                 inactiveClass,
               )}
             >
-              <div className="flex-shrink-0">{item.icon}</div>
+              <div className="shrink-0">{item.icon}</div>
               {isExpanded && (
                 <span className="font-medium whitespace-nowrap overflow-hidden">
                   {item.label}
                 </span>
               )}
               {item.badge != null && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 border border-[#1a1a1a] rounded-full text-[10px] flex items-center justify-center text-white">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#005f47] border border-[#0e6c52] rounded-full text-[10px] flex items-center justify-center text-white">
                   {item.badge}
                 </span>
               )}
@@ -155,7 +169,7 @@ export function ExpandableSidebar({
             inactiveClass,
           )}
         >
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Settings size={18} />
           </div>
           {isExpanded && (
@@ -165,20 +179,18 @@ export function ExpandableSidebar({
           )}
         </button>
 
-        {avatar && (
+        {(userName || userEmail) && (
           <div className="flex items-center gap-3 px-3 py-2">
-            <img
-              src={avatar}
-              alt="user"
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            />
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <User size={16} className="text-white" />
+            </div>
             {isExpanded && (
               <div className="overflow-hidden">
                 <p className="text-white text-sm font-medium whitespace-nowrap">
-                  Admin User
+                  {userName || 'Admin User'}
                 </p>
-                <p className="text-gray-400 text-xs whitespace-nowrap">
-                  admin@sahakari.com
+                <p className="text-[#d6f7ea] text-xs whitespace-nowrap">
+                  {userEmail || 'admin@sahakari.com'}
                 </p>
               </div>
             )}
@@ -186,7 +198,7 @@ export function ExpandableSidebar({
         )}
 
         {footerLabel && isExpanded && (
-          <p className="text-gray-600 text-xs px-3 py-2">{footerLabel}</p>
+          <p className="text-[#d6f7ea] text-xs px-3 py-2">{footerLabel}</p>
         )}
       </div>
     </div>

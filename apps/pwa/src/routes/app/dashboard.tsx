@@ -117,7 +117,7 @@ function DashboardPage() {
       >
         <div>
           <h1 className="font-headline text-on-surface text-lg leading-tight font-bold">
-            {user.fullName ?? ""}
+            Namaste, {user.fullName ?? ""}!
           </h1>
         </div>
       </AppHeader>

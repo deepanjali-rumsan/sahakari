@@ -37,6 +37,10 @@ function AppLayout() {
   const token = getToken();
   const navigate = useNavigate();
   const user = JSON.parse(getStorageItem("user") ?? "{}");
+  const cooperativeName =
+    typeof user.cooperative === "string"
+      ? user.cooperative
+      : (user.cooperative?.name ?? "");
   const { isOpen, closeSidebar } = useSidebar();
 
   const { data: kyc } = useQuery({
@@ -67,7 +71,7 @@ function AppLayout() {
             Sahakari
           </h1>
           <p className="text-on-surface-variant mt-0.5 text-xs">
-            {user.cooperative ?? ""}
+            {cooperativeName}
           </p>
         </div>
 
@@ -134,7 +138,7 @@ function AppLayout() {
             Sahakari
           </h1>
           <p className="text-on-surface-variant mt-0.5 text-xs">
-            {user.cooperative ?? ""}
+            {cooperativeName}
           </p>
         </div>
 

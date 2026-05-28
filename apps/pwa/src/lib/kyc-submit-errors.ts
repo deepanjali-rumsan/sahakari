@@ -76,10 +76,14 @@ export function clearKycSubmitErrors() {
 }
 
 export function getKycSubmitErrorsForRoute(route: KycRoutePath) {
-  return getStoredKycSubmitErrors().filter((error) => fieldRouteMap[error.field] === route);
+  return getStoredKycSubmitErrors().filter(
+    (error) => fieldRouteMap[error.field] === route,
+  );
 }
 
-export function getFirstKycErrorRoute(errors: KycSubmitFieldError[]): KycRoutePath {
+export function getFirstKycErrorRoute(
+  errors: KycSubmitFieldError[],
+): KycRoutePath {
   const first = errors.find((error) => fieldRouteMap[error.field]);
   return first ? fieldRouteMap[first.field] : "/app/kyc/basic-info";
 }

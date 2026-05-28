@@ -48,7 +48,8 @@ export class IndexedDBContactStorage implements ContactStorage {
     db.close()
     const contacts = result as Contact[]
     return contacts.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )
   }
 
@@ -74,7 +75,9 @@ export class IndexedDBContactStorage implements ContactStorage {
 
   async update(id: string, data: UpdateContactInput): Promise<Contact> {
     const db = await openDb()
-    const existing = (await tx(db, 'readonly', (s) => s.get(id))) as Contact | undefined
+    const existing = (await tx(db, 'readonly', (s) => s.get(id))) as
+      | Contact
+      | undefined
     if (!existing) {
       db.close()
       throw new Error(`Contact ${id} not found`)

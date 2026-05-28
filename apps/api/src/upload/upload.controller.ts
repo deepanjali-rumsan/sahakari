@@ -20,7 +20,10 @@ export class UploadController {
   async upload(@Request() req: any, @Body() body: { file: string }) {
     const contentType = req.headers['content-type'] ?? '';
 
-    if (typeof contentType === 'string' && contentType.includes('multipart/form-data')) {
+    if (
+      typeof contentType === 'string' &&
+      contentType.includes('multipart/form-data')
+    ) {
       const uploadedFile = await req.file();
       if (!uploadedFile) throw new BadRequestException('File is required');
 

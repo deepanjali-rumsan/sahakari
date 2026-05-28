@@ -69,7 +69,7 @@ export function ExpandableSidebar({
   return (
     <div
       className={cn(
-        'bg-[#0e6c52] flex flex-col py-4 gap-2 shrink-0 transition-all duration-300 ease-in-out relative',
+        'bg-teal-800 flex flex-col py-4 gap-2 shrink-0 transition-all duration-300 ease-in-out relative',
         isExpanded ? 'w-64' : 'w-16',
         className,
       )}

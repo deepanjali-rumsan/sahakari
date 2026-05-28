@@ -90,7 +90,10 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-  const maxUploadBytes = parseInt(process.env.MAX_UPLOAD_SIZE_BYTES ?? String(1 * 1024 * 1024), 10);
+  const maxUploadBytes = parseInt(
+    process.env.MAX_UPLOAD_SIZE_BYTES ?? String(1 * 1024 * 1024),
+    10,
+  );
   await app.register(multipart, {
     limits: {
       fileSize: maxUploadBytes,

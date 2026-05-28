@@ -4,7 +4,9 @@ import { cn } from '@rs/ui'
 import type { CreateContactInput, ContactTag, ContactStatus } from '@rs/sdk'
 import { useCreateContact } from '../hooks/contacts'
 
-export const Route = createFileRoute('/_app/contacts/new')({ component: NewContact })
+export const Route = createFileRoute('/_app/contacts/new')({
+  component: NewContact,
+})
 
 const TAGS: ContactTag[] = ['Client', 'Lead', 'Partner', 'Vendor', 'Archived']
 const STATUSES: ContactStatus[] = ['Active', 'Inactive']
@@ -46,10 +48,14 @@ function NewContact() {
               ← Contacts
             </Link>
             <span className="text-gray-300">/</span>
-            <span className="text-sm font-semibold text-[#1a1a1a]">New contact</span>
+            <span className="text-sm font-semibold text-[#1a1a1a]">
+              New contact
+            </span>
           </div>
 
-          <h1 className="text-3xl font-black text-[#1a1a1a] mb-8">Add contact</h1>
+          <h1 className="text-3xl font-black text-[#1a1a1a] mb-8">
+            Add contact
+          </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -127,7 +133,9 @@ function NewContact() {
               <Field label="Status">
                 <select
                   value={form.status}
-                  onChange={(e) => set('status', e.target.value as ContactStatus)}
+                  onChange={(e) =>
+                    set('status', e.target.value as ContactStatus)
+                  }
                   className={inputCls}
                 >
                   {STATUSES.map((s) => (
@@ -180,10 +188,18 @@ function NewContact() {
 const inputCls =
   'w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white'
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
+      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        {label}
+      </label>
       {children}
     </div>
   )

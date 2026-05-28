@@ -10,7 +10,10 @@ import { Prisma } from '@rs/db';
 
 @Injectable()
 export class KycService {
-  private readonly requiredFields: Array<{ key: keyof Prisma.KycUncheckedCreateInput; label: string }> = [
+  private readonly requiredFields: Array<{
+    key: keyof Prisma.KycUncheckedCreateInput;
+    label: string;
+  }> = [
     { key: 'fullNameEn', label: 'Full Name (English)' },
     { key: 'fullNameNp', label: 'Full Name (Nepali)' },
     { key: 'passbookNo', label: 'Passbook Number' },
@@ -41,9 +44,15 @@ export class KycService {
     { key: 'mandatoryDob', label: 'Mandatory Nominee Date of Birth' },
     { key: 'mandatoryRelation', label: 'Mandatory Nominee Relation' },
     { key: 'mandatoryAddress', label: 'Mandatory Nominee Address' },
-    { key: 'mandatoryContactNumber', label: 'Mandatory Nominee Contact Number' },
+    {
+      key: 'mandatoryContactNumber',
+      label: 'Mandatory Nominee Contact Number',
+    },
     { key: 'mandatorySignatureUrl', label: 'Mandatory Nominee Signature' },
-    { key: 'mandatoryPassportPhotoUrl', label: 'Mandatory Nominee Passport Photo' },
+    {
+      key: 'mandatoryPassportPhotoUrl',
+      label: 'Mandatory Nominee Passport Photo',
+    },
     { key: 'nomineeName', label: 'Nominee Name' },
     { key: 'nomineeDob', label: 'Nominee Date of Birth' },
     { key: 'nomineeRelation', label: 'Nominee Relation' },

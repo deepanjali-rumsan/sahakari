@@ -470,6 +470,7 @@ model PassbookTransaction {
   passbookId    String
   passbook      Passbook    @relation(fields: [passbookId], references: [id], onDelete: Cascade)
   type          PassbookTransactionType       
+  amount        Float
   description   String?
   balanceAfter  Float      
   

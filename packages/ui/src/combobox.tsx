@@ -16,21 +16,27 @@ import {
 
 type ComboboxFilterMode = "label" | "value" | "label+value";
 
-function defaultItemToStringLabel(item: unknown) {
+function defaultItemToStringLabel(item: unknown): string {
   if (item && typeof item === "object" && "label" in item) {
     const label = (item as { label?: unknown }).label;
     if (typeof label === "string") return label;
   }
-  return item == null ? "" : String(item);
+  if (item == null) return "";
+  if (typeof item === "object") return "";
+  // At this point, item is a primitive (string, number, boolean, etc.)
+  return String(item as string | number | boolean);
 }
 
-function defaultItemToStringValue(item: unknown) {
+function defaultItemToStringValue(item: unknown): string {
   if (item && typeof item === "object" && "value" in item) {
     const value = (item as { value?: unknown }).value;
     if (typeof value === "string" || typeof value === "number")
       return String(value);
   }
-  return item == null ? "" : String(item);
+  if (item == null) return "";
+  if (typeof item === "object") return "";
+  // At this point, item is a primitive (string, number, boolean, etc.)
+  return String(item as string | number | boolean);
 }
 
 type ComboboxProps<

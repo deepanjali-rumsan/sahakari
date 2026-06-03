@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Users,
-  FileText,
-  CreditCard,
+  ArrowLeft,
   CheckCircle2,
   Clock,
-  ArrowLeft,
+  CreditCard,
+  FileText,
+  Users,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -24,7 +24,7 @@ function getToken() {
 function RecentActivities() {
   const navigate = useNavigate()
   const token = getToken()
-  const [recentActivities, setRecentActivities] = useState<any[]>([])
+  const [recentActivities, setRecentActivities] = useState<Array<any>>([])
 
   useQuery({
     queryKey: ['recent-activities-full'],

@@ -1,18 +1,18 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Users,
-  FileText,
-  CreditCard,
-  CheckCircle2,
   ArrowRight,
-  LogOut,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
   Calendar,
+  CheckCircle2,
   Clock,
+  CreditCard,
+  DollarSign,
   ExternalLink,
+  FileText,
+  LogOut,
+  TrendingDown,
+  TrendingUp,
+  Users,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -38,7 +38,7 @@ function Dashboard() {
     loanApproved: number
     loanRejected: number
   } | null>(null)
-  const [recentActivities, setRecentActivities] = useState<any[]>([])
+  const [recentActivities, setRecentActivities] = useState<Array<any>>([])
   const [monthlyStats, setMonthlyStats] = useState<{
     newMembers: number
     loansDisbursed: number

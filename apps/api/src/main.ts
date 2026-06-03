@@ -9,8 +9,6 @@ import {
 import multipart from '@fastify/multipart';
 import staticFiles from '@fastify/static';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { WinstonModule } from 'nest-winston';
-import { format, transports } from 'winston';
 import { AppModule } from './app.module';
 
 const envFiles = [

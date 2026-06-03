@@ -8,6 +8,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import type { AuthRequest } from '../auth/types';
 import { PassbookService } from './passbook.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreatePassbookDto } from './dto/create-passbook.dto';
@@ -20,13 +21,13 @@ export class PassbookController {
   constructor(private passbook: PassbookService) {}
 
   @Get('me')
-  getMine(@Request() req: any) {
+  getMine(@Request() req: AuthRequest) {
     // Use advanced calculation for accurate interest
     return this.passbook.getByUserId(req.user.sub);
   }
 
   @Get('me/transactions')
-  getTransactions(@Request() req: any) {
+  getTransactions(@Request() req: AuthRequest) {
     return this.passbook.getTransactions(req.user.sub);
   }
 }

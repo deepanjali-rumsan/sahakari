@@ -1,11 +1,11 @@
 import {
-  createFileRoute,
   Link,
   Outlet,
+  createFileRoute,
   useMatches,
 } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, Eye, BanknoteArrowDown, HandCoins } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { BanknoteArrowDown, Eye, HandCoins, Users } from 'lucide-react'
 import { useState } from 'react'
 import {
   Tooltip,
@@ -19,6 +19,7 @@ import { Field, FieldLabel } from '@rs/ui/field'
 import { Input } from '@rs/ui/input'
 import { Textarea } from '@rs/ui/textarea'
 import { toast } from '@rs/ui/toast'
+import { formatStatusLabel, getStatusBadgeClass } from '@/lib/status'
 
 export const Route = createFileRoute('/_app/customers')({
   component: CustomersPage,
@@ -250,9 +251,11 @@ function CustomersPage() {
                   </td>
                   <td className="py-3 px-4">
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${user.kyc?.status === 'APPROVED' ? 'bg-green-100 text-green-700' : user.kyc?.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClass(user.kyc?.status)}`}
                     >
-                      {user.kyc?.status ?? 'Not Started'}
+                      {user.kyc?.status
+                        ? formatStatusLabel(user.kyc.status)
+                        : 'Not Started'}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600">

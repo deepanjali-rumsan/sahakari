@@ -1,24 +1,25 @@
 import {
-  createFileRoute,
   Link,
   Outlet,
+  createFileRoute,
   useMatches,
 } from '@tanstack/react-router'
 import {
-  Search,
-  Plus,
-  Mail,
-  Phone,
   Globe,
+  Loader2,
+  Mail,
   MoreHorizontal,
   Pencil,
-  Trash2,
+  Phone,
+  Plus,
+  Search,
   SlidersHorizontal,
-  Loader2,
+  Trash2,
 } from 'lucide-react'
 import * as React from 'react'
 import { cn } from '@rs/ui'
 import { useContacts, useDeleteContact } from '../hooks/contacts'
+import { getStatusBadgeClass } from '@/lib/status'
 
 export const Route = createFileRoute('/_app/contacts')({ component: Contacts })
 
@@ -47,13 +48,14 @@ function Contacts() {
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
-      (c.company ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      c.company?.toLowerCase().includes(search.toLowerCase()) ||
       c.tag.toLowerCase().includes(search.toLowerCase()),
   )
 
-  const activeId = selectedId ?? filtered[0]?.id ?? null
-  const selected =
-    contacts.find((c) => c.id === activeId) ?? filtered[0] ?? null
+  const activeId = selectedId ?? filtered[0]?.id
+  const selected = activeId
+    ? (contacts.find((c) => c.id === activeId) ?? filtered[0])
+    : null
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this contact?')) return
@@ -64,7 +66,7 @@ function Contacts() {
   return (
     <div className="flex h-full bg-[#f0f0f0] overflow-hidden">
       {/* Left: contact list */}
-      <div className="w-[280px] flex-shrink-0 flex flex-col bg-[#f0f0f0]">
+      <div className="w-[280px] shrink-0 flex flex-col bg-[#f0f0f0]">
         <div className="px-4 pt-5 pb-3">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-xl font-bold text-[#1a1a1a]">Contacts</h2>
@@ -119,7 +121,7 @@ function Contacts() {
                     : 'hover:bg-white/50',
                 )}
               >
-                <div className="relative flex-shrink-0">
+                <div className="relative shrink-0">
                   {c.avatar ? (
                     <img
                       src={c.avatar}
@@ -145,7 +147,7 @@ function Contacts() {
                     </span>
                     <span
                       className={cn(
-                        'text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ml-1',
+                        'text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ml-1',
                         TAG_COLORS[c.tag] ?? 'bg-gray-100 text-gray-600',
                       )}
                     >
@@ -171,7 +173,7 @@ function Contacts() {
             <div className="px-8 pt-7 pb-5 border-b border-gray-100">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-5">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-orange-100 flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 bg-orange-100 flex items-center justify-center">
                     {selected.avatar ? (
                       <img
                         src={selected.avatar}
@@ -201,9 +203,11 @@ function Contacts() {
                       <span
                         className={cn(
                           'text-xs px-2.5 py-1 rounded-full font-semibold',
-                          selected.status === 'Active'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-500',
+                          getStatusBadgeClass(
+                            selected.status === 'Active'
+                              ? 'ACTIVE'
+                              : 'INACTIVE',
+                          ),
                         )}
                       >
                         {selected.status}

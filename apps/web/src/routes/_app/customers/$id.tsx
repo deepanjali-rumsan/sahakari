@@ -1,27 +1,27 @@
 import {
-  createFileRoute,
-  useNavigate,
   Link,
   Outlet,
+  createFileRoute,
   useMatches,
+  useNavigate,
 } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  ChevronLeft,
-  User,
-  Phone,
-  Mail,
-  FileText,
-  CreditCard,
-  MapPin,
   Calendar,
   CheckCircle2,
-  XCircle,
+  ChevronLeft,
   Clock,
+  CreditCard,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
   Plus,
-  Wallet,
   Receipt,
+  User,
+  Wallet,
+  XCircle,
 } from 'lucide-react'
 import {
   Dialog,
@@ -40,6 +40,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@rs/ui/tooltip'
+import { formatStatusLabel, getStatusBadgeClass } from '@/lib/status'
 
 export const Route = createFileRoute('/_app/customers/$id')({
   component: CustomerDetailPage,
@@ -99,8 +100,8 @@ function CustomerDetailPage() {
         }),
       })
       if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.message || 'Failed to create passbook')
+        const errorData = await res.json()
+        throw new Error(errorData.message || 'Failed to create passbook')
       }
       return res.json()
     },
@@ -115,8 +116,8 @@ function CustomerDetailPage() {
         interestRateLoan: 0,
       })
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create passbook')
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to create passbook')
     },
   })
 
@@ -130,9 +131,7 @@ function CustomerDetailPage() {
   if (error)
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500">
-          Error loading customer: {(error as Error).message}
-        </p>
+        <p className="text-red-500">Error loading customer: {error.message}</p>
         <button
           onClick={() => navigate({ to: '/customers' })}
           className="mt-4 text-blue-600 hover:underline"
@@ -153,15 +152,6 @@ function CustomerDetailPage() {
       month: 'short',
       day: 'numeric',
     })
-  }
-
-  const statusColors: Record<string, string> = {
-    APPROVED: 'bg-green-100 text-green-700',
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    UNDER_REVIEW: 'bg-orange-100 text-orange-700',
-    REJECTED: 'bg-red-100 text-red-700',
-    SUBMITTED: 'bg-blue-100 text-blue-700',
-    DRAFT: 'bg-gray-100 text-gray-600',
   }
 
   const getStatusIcon = (status: string) => {
@@ -236,9 +226,7 @@ function CustomerDetailPage() {
                     </span>
                   </TooltipTrigger>
                   {!canCreatePassbook && (
-                    <TooltipContent>
-                      <p>{getButtonTooltip()}</p>
-                    </TooltipContent>
+                    <TooltipContent>{getButtonTooltip()}</TooltipContent>
                   )}
                 </Tooltip>
 
@@ -379,10 +367,10 @@ function CustomerDetailPage() {
                 </div>
                 {customer.kyc?.status && (
                   <div
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${statusColors[customer.kyc.status] ?? 'bg-gray-100'}`}
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${getStatusBadgeClass(customer.kyc.status)}`}
                   >
                     {getStatusIcon(customer.kyc.status)}
-                    KYC: {customer.kyc.status}
+                    KYC: {formatStatusLabel(customer.kyc.status)}
                   </div>
                 )}
               </div>
@@ -436,10 +424,10 @@ function CustomerDetailPage() {
                     <div>
                       <p className="text-gray-500 text-xs mb-1">Status</p>
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[customer.kyc.status] ?? 'bg-gray-100'}`}
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClass(customer.kyc.status)}`}
                       >
                         {getStatusIcon(customer.kyc.status)}
-                        {customer.kyc.status}
+                        {formatStatusLabel(customer.kyc.status)}
                       </span>
                     </div>
                     {customer.kyc.citizenshipNumber && (
@@ -508,7 +496,6 @@ function CustomerDetailPage() {
                     }
 
                     const getFullName = (item: (typeof genealogyData)[0]) => {
-                      if (!item) return ''
                       const nameEn = [item.nameEn, item.surnameEn]
                         .filter(Boolean)
                         .join(' ')
@@ -763,10 +750,10 @@ function CustomerDetailPage() {
                               Ref: {loan.referenceNumber}
                             </p>
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[loan.status] ?? 'bg-gray-100'}`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBadgeClass(loan.status)}`}
                             >
                               {getStatusIcon(loan.status)}
-                              {loan.status?.replace('_', ' ')}
+                              {formatStatusLabel(loan.status)}
                             </span>
                           </div>
                           <div className="flex items-center gap-4 text-xs text-gray-600">

@@ -17,6 +17,17 @@ function isPdf(url: string) {
   return url.toLowerCase().includes(".pdf");
 }
 
+type LoanInstallment = {
+  installmentNumber: number;
+  dueDate: string;
+  totalAmount: number;
+  isPaid: boolean;
+  paidAmount?: number | null;
+  paidDate?: string | null;
+  penaltyAmount?: number | null;
+  daysPastDue?: number | null;
+};
+
 function DocumentPreview({ label, url }: { label: string; url: string }) {
   return (
     <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
@@ -58,6 +69,8 @@ function LoanDetailPage() {
     enabled: !!token,
   });
 
+  console.log("Component rendered with loan:", loan);
+
   const statusConfig: Record<string, { className: string; label: string }> = {
     APPROVED: {
       className: "bg-primary-container text-on-primary-container",
@@ -82,6 +95,23 @@ function LoanDetailPage() {
   };
 
   const tabs = ["Details", "Documents"];
+  const installments: Array<LoanInstallment> =
+    (loan as any)?.installments ?? [];
+  const paidInstallments = installments.filter((item) => item.isPaid);
+  const unpaidInstallments = installments.filter((item) => !item.isPaid);
+  const nextUnpaidInstallment = unpaidInstallments[0];
+  const totalPaidAmount = paidInstallments.reduce(
+    (sum, item) => sum + (item.paidAmount || item.totalAmount || 0),
+    0,
+  );
+  const totalScheduledAmount = installments.reduce(
+    (sum, item) => sum + (item.totalAmount || 0),
+    0,
+  );
+  const totalPenaltyAmount = paidInstallments.reduce(
+    (sum, item) => sum + (item.penaltyAmount || 0),
+    0,
+  );
   const [activeTab, setActiveTab] = useState(0);
 
   if (isLoading) {
@@ -100,6 +130,7 @@ function LoanDetailPage() {
   }
 
   const status = statusConfig[loan.status] ?? statusConfig["DRAFT"];
+  const detailTabs = ["Details", "Repayments", "Documents"];
 
   return (
     <div className="bg-surface min-h-screen pb-32">
@@ -141,17 +172,17 @@ function LoanDetailPage() {
         </div>
 
         {/* Rejection reason */}
-        {loan.status === "REJECTED" && loan.rejectionReason && (
+        {loan.status === "REJECTED" && loan.rejectionReason ? (
           <div className="bg-error-container rounded-xl px-5 py-4">
             <p className="text-on-error-container text-xs font-semibold">
               Rejection Reason: {loan.rejectionReason}
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Tabs */}
         <div className="bg-surface-container-low flex gap-2 rounded-2xl p-1.5">
-          {tabs.map((tab, i) => (
+          {detailTabs.map((tab, i) => (
             <button
               key={tab}
               onClick={() => setActiveTab(i)}
@@ -195,8 +226,152 @@ function LoanDetailPage() {
           </div>
         )}
 
-        {/* Documents tab */}
+        {/* Repayments tab */}
         {activeTab === 1 && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+                <p className="text-on-surface-variant text-xs font-medium">
+                  Paid Installments
+                </p>
+                <p className="text-on-surface mt-2 text-2xl font-bold">
+                  {paidInstallments.length}
+                </p>
+              </div>
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+                <p className="text-on-surface-variant text-xs font-medium">
+                  Unpaid Installments
+                </p>
+                <p className="text-on-surface mt-2 text-2xl font-bold">
+                  {unpaidInstallments.length}
+                </p>
+              </div>
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+                <p className="text-on-surface-variant text-xs font-medium">
+                  Paid Amount
+                </p>
+                <p className="text-on-surface mt-2 text-2xl font-bold">
+                  NPR {totalPaidAmount.toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm">
+                <p className="text-on-surface-variant text-xs font-medium">
+                  Remaining
+                </p>
+                <p className="text-on-surface mt-2 text-2xl font-bold">
+                  NPR{" "}
+                  {Math.max(
+                    0,
+                    totalScheduledAmount - totalPaidAmount,
+                  ).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {}
+            {Boolean(nextUnpaidInstallment) && (
+              <div className="bg-primary-container rounded-xl px-5 py-4">
+                <p className="text-on-primary-container text-xs font-semibold tracking-wide uppercase">
+                  Next Due
+                </p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-on-primary-container text-sm font-semibold">
+                      Installment #{nextUnpaidInstallment.installmentNumber}
+                    </p>
+                    <p className="text-on-primary-container/80 text-sm">
+                      Due on{" "}
+                      {new Date(
+                        nextUnpaidInstallment.dueDate,
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <p className="text-on-primary-container text-lg font-bold">
+                    NPR {nextUnpaidInstallment.totalAmount.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+            {installments.length === 0 ? (
+              <div className="bg-primary-container rounded-xl px-5 py-4">
+                <p className="text-on-primary-container text-sm font-semibold">
+                  No installment schedule is available yet.
+                </p>
+              </div>
+            ) : !nextUnpaidInstallment ? (
+              <div className="bg-primary-container rounded-xl px-5 py-4">
+                <p className="text-on-primary-container text-sm font-semibold">
+                  All installments are paid.
+                </p>
+              </div>
+            ) : null}
+
+            <div className="bg-surface-container-lowest overflow-hidden rounded-xl shadow-sm">
+              <div className="border-surface-container-low border-b px-5 py-4">
+                <h3 className="text-on-surface text-sm font-semibold">
+                  Installment History
+                </h3>
+              </div>
+              {installments.length > 0 ? (
+                <div className="divide-surface-container-low divide-y">
+                  {installments.map((installment) => (
+                    <div
+                      key={installment.installmentNumber}
+                      className="flex items-start justify-between gap-4 px-5 py-4"
+                    >
+                      <div>
+                        <p className="text-on-surface text-sm font-semibold">
+                          Installment #{installment.installmentNumber}
+                        </p>
+                        <p className="text-on-surface-variant mt-1 text-xs">
+                          Due{" "}
+                          {new Date(installment.dueDate).toLocaleDateString()}
+                        </p>
+                        {installment.isPaid ? (
+                          <p className="text-primary mt-2 text-xs font-medium">
+                            Paid on{" "}
+                            {installment.paidDate
+                              ? new Date(
+                                  installment.paidDate,
+                                ).toLocaleDateString()
+                              : "—"}
+                          </p>
+                        ) : (
+                          <p className="text-error mt-2 text-xs font-medium">
+                            Pending payment
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-on-surface text-sm font-semibold">
+                          NPR {installment.totalAmount.toLocaleString()}
+                        </p>
+                        <span
+                          className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            installment.isPaid
+                              ? "bg-primary-container text-black"
+                              : "bg-red-300 text-black"
+                          }`}
+                        >
+                          {installment.isPaid ? "Paid" : "Unpaid"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-5 py-10 text-center">
+                  <p className="text-on-surface-variant text-sm">
+                    No installment schedule is available yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Documents tab */}
+        {activeTab === 2 && (
           <div className="space-y-4">
             {loan.citizenshipFrontUrl && (
               <DocumentPreview

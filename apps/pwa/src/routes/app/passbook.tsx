@@ -55,7 +55,7 @@ function PassbookPage() {
   });
 
   const pb = passbook as any;
-  const loanList = (loans as any[]) ?? [];
+  const loanList = (loans ?? []) as Array<any>;
 
   return (
     <div className="bg-surface min-h-screen">
@@ -75,7 +75,7 @@ function PassbookPage() {
                 <span className="text-xs font-medium">Available Balance</span>
               </div>
               <p className="font-headline mb-4 text-3xl font-bold tracking-tight">
-                NPR {(pb?.currentBalance ?? 0).toLocaleString()}
+                NPR {(pb?.currentBalance || 0).toLocaleString()}
               </p>
 
               {/* Interest Info */}
@@ -86,10 +86,10 @@ function PassbookPage() {
                     <span className="text-xs">Accrued Interest</span>
                   </div>
                   <p className="text-lg font-semibold">
-                    NPR {(pb?.accruedInterest ?? 0).toFixed(2)}
+                    NPR {(pb?.accruedInterest || 0).toFixed(2)}
                   </p>
                   <p className="text-xs opacity-70">
-                    {pb?.interestPeriodDays ?? 0} days
+                    {pb?.interestPeriodDays || 0} days
                   </p>
                 </div>
                 <div>
@@ -97,7 +97,7 @@ function PassbookPage() {
                     <span className="text-xs">Interest Rate</span>
                   </div>
                   <p className="text-lg font-semibold">
-                    {pb?.interestRateSavings ?? 0}%
+                    {pb?.interestRateSavings || 0}%
                   </p>
                   <p className="text-xs opacity-70">per annum</p>
                 </div>

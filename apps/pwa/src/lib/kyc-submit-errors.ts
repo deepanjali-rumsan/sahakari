@@ -56,7 +56,7 @@ const fieldRouteMap: Record<string, KycRoutePath> = {
   passportPhotoUrl: "/app/kyc/signature",
 };
 
-export function getStoredKycSubmitErrors(): KycSubmitFieldError[] {
+export function getStoredKycSubmitErrors(): Array<KycSubmitFieldError> {
   try {
     const raw = getStorageItem(KYC_SUBMIT_ERRORS_KEY);
     if (!raw) return [];
@@ -67,7 +67,7 @@ export function getStoredKycSubmitErrors(): KycSubmitFieldError[] {
   }
 }
 
-export function storeKycSubmitErrors(errors: KycSubmitFieldError[]) {
+export function storeKycSubmitErrors(errors: Array<KycSubmitFieldError>) {
   setStorageItem(KYC_SUBMIT_ERRORS_KEY, JSON.stringify(errors));
 }
 
@@ -82,8 +82,8 @@ export function getKycSubmitErrorsForRoute(route: KycRoutePath) {
 }
 
 export function getFirstKycErrorRoute(
-  errors: KycSubmitFieldError[],
+  errors: Array<KycSubmitFieldError>,
 ): KycRoutePath {
-  const first = errors.find((error) => fieldRouteMap[error.field]);
+  const first = errors.find((error) => error.field in fieldRouteMap);
   return first ? fieldRouteMap[first.field] : "/app/kyc/basic-info";
 }

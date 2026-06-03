@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  createFileRoute,
   Link,
   Outlet,
+  createFileRoute,
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
@@ -17,7 +17,6 @@ import {
 
 import { createKycApi, createLoanApi } from "@rs/sdk";
 
-import type { KycSubmitFieldError } from "../../lib/kyc-submit-errors";
 import { AppHeader } from "../../components/app-header";
 import TooltipWrapper from "../../components/tooltip-wrapper";
 import {
@@ -26,9 +25,10 @@ import {
   storeKycSubmitErrors,
 } from "../../lib/kyc-submit-errors";
 import { getToken } from "../../lib/storage";
+import type { KycSubmitFieldError } from "../../lib/kyc-submit-errors";
 
 const apiUrl = import.meta.env["VITE_API_URL"] ?? "";
-type SubmitError = Error & { details?: KycSubmitFieldError[] };
+type SubmitError = Error & { details?: Array<KycSubmitFieldError> };
 
 export const Route = createFileRoute("/app/kyc")({
   component: KycRouteWrapper,
@@ -57,7 +57,7 @@ function KycPage() {
   const queryClient = useQueryClient();
   const kycApi = createKycApi(apiUrl);
   const loanApi = createLoanApi(apiUrl);
-  const [submitErrors, setSubmitErrors] = useState<KycSubmitFieldError[]>([]);
+  const [submitErrors, setSubmitErrors] = useState<Array<KycSubmitFieldError>>([]);
 
   const { data: kyc, isLoading } = useQuery({
     queryKey: ["kyc"],

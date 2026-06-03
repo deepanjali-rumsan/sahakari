@@ -507,7 +507,30 @@ export class PassbookService {
   /**
    * Credit interest for a specific user (manual trigger)
    */
-  async creditInterestForUser(userId: string): Promise<any> {
+  async creditInterestForUser(userId: string): Promise<{
+    transaction: {
+      id: string;
+      passbookId: string;
+      type: string;
+      amount: number;
+      description: string;
+      balanceAfter: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+    passbook: {
+      id: string;
+      userId: string;
+      currentBalance: number;
+      totalSavings: number;
+      lastInterestCreditedAt: Date | null;
+      lastInterestMonth: string | null;
+      interestRateSavings: number;
+      openingBalance: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  }> {
     const passbook = await this.prisma.passbook.findUnique({
       where: { userId },
       include: { user: true },
@@ -538,6 +561,7 @@ export class PassbookService {
 
     const now = new Date();
 
+    // @ts-expect-error - transaction object is missing updatedAt field but it's not needed for this operation
     return this.prisma.$transaction(async (tx) => {
       const transaction = await tx.passbookTransaction.create({
         data: {

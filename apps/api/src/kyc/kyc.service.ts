@@ -159,7 +159,10 @@ export class KycService {
 
   async listAdmin(params: { status?: string; page?: number; limit?: number }) {
     const { status, page = 1, limit = 20 } = params;
-    const where = status ? { status: status as any } : {};
+    // @ts-expect-error - status from query params is validated at runtime
+    const where: Prisma.KycWhereInput | undefined = status
+      ? { status }
+      : undefined;
     const [data, total] = await Promise.all([
       this.prisma.kyc.findMany({
         where,

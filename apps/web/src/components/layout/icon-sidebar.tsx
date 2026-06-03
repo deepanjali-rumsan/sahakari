@@ -12,7 +12,7 @@ export interface SidebarNavItem {
 }
 
 export interface IconSidebarProps {
-  navItems?: SidebarNavItem[]
+  navItems?: Array<SidebarNavItem>
   /** Avatar URL shown at the bottom */
   avatar?: string
   /** Footer label rendered vertically */

@@ -1,14 +1,14 @@
-import type { District, Municipality, Province } from "@rs/sdk";
 import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { createGeoApi, createKycApi } from "@rs/sdk";
 
 import { GenerationalSection } from "../../../components/kyc/FormFields";
 import { getKycSubmitErrorsForRoute } from "../../../lib/kyc-submit-errors";
 import { getToken } from "../../../lib/storage";
+import type { District, Municipality, Province } from "@rs/sdk";
 
 const apiUrl = import.meta.env["VITE_API_URL"] ?? "";
 const kycApi = createKycApi(apiUrl);

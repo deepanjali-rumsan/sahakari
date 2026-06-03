@@ -1,15 +1,15 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import * as React from 'react'
 import { cn } from '@rs/ui'
-import type { UpdateContactInput, ContactTag, ContactStatus } from '@rs/sdk'
 import { useContact, useUpdateContact } from '../hooks/contacts'
+import type { ContactStatus, ContactTag, UpdateContactInput } from '@rs/sdk'
 
 export const Route = createFileRoute('/_app/contacts/$id/edit')({
   component: EditContact,
 })
 
-const TAGS: ContactTag[] = ['Client', 'Lead', 'Partner', 'Vendor', 'Archived']
-const STATUSES: ContactStatus[] = ['Active', 'Inactive']
+const TAGS: Array<ContactTag> = ['Client', 'Lead', 'Partner', 'Vendor', 'Archived']
+const STATUSES: Array<ContactStatus> = ['Active', 'Inactive']
 
 function EditContact() {
   const { id } = Route.useParams()
@@ -190,7 +190,7 @@ function EditContact() {
 
             {updateMutation.error && (
               <p className="text-sm text-red-500">
-                {(updateMutation.error as Error).message}
+                {(updateMutation.error).message}
               </p>
             )}
 

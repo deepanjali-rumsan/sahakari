@@ -29,7 +29,9 @@ export class LoanService {
     return `SAH-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
   }
 
-  private sanitizeNumericFields(data: any): any {
+  private sanitizeNumericFields(
+    data: Record<string, unknown>,
+  ): Record<string, unknown> {
     const numericFields = [
       'loanAmount',
       'guaranteeAmount',
@@ -89,6 +91,40 @@ export class LoanService {
     return newDate;
   }
 
+  private calculateInstallmentDue(
+    installment: Prisma.LoanInstallmentGetPayload<{
+      include: { loanApplication: true };
+    }>,
+    paymentDate: Date,
+  ) {
+    let penaltyAmount = 0;
+    let daysPastDue = 0;
+
+    if (paymentDate > installment.dueDate) {
+      daysPastDue = Math.floor(
+        (paymentDate.getTime() - installment.dueDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
+
+      const gracePeriod = installment.loanApplication.gracePeriodDays || 7;
+      if (daysPastDue > gracePeriod) {
+        const monthsLate = Math.ceil(daysPastDue / 30);
+        penaltyAmount =
+          installment.totalAmount *
+          ((installment.loanApplication.lateFeePercentage || 2) / 100) *
+          monthsLate;
+        penaltyAmount = Math.round(penaltyAmount * 100) / 100;
+      }
+    }
+
+    return {
+      penaltyAmount,
+      daysPastDue,
+      totalDue:
+        Math.round((installment.totalAmount + penaltyAmount) * 100) / 100,
+    };
+  }
+
   /**
    * Generate loan payment schedule using reducing balance method
    */
@@ -100,19 +136,28 @@ export class LoanService {
     frequency: PaymentFrequency,
     disbursedDate: Date,
   ) {
-    const periodsPerYear = this.getPeriodsPerYear(frequency);
-    const periodicRate = annualRate / 100 / periodsPerYear;
+    let periodsPerYear = this.getPeriodsPerYear(frequency);
+    if (!periodsPerYear || !Number.isFinite(periodsPerYear))
+      periodsPerYear = 12;
 
-    // Calculate EMI (Equated Monthly/Periodic Installment) using reducing balance
-    const emi =
-      (principal * periodicRate * Math.pow(1 + periodicRate, numInstallments)) /
-      (Math.pow(1 + periodicRate, numInstallments) - 1);
+    const safeAnnual = Number(annualRate) || 0;
+    const safeNum = Number(numInstallments) || 12;
+    const periodicRate = safeAnnual / 100 / periodsPerYear;
+
+    // Calculate EMI (Equated Periodic Installment) using reducing balance
+    let emi: number;
+    if (!Number.isFinite(periodicRate) || periodicRate === 0) {
+      emi = Math.round((principal / safeNum) * 100) / 100;
+    } else {
+      const pow = Math.pow(1 + periodicRate, safeNum);
+      emi = (principal * periodicRate * pow) / (pow - 1);
+    }
 
     let remainingBalance = principal;
     let currentDate = new Date(disbursedDate);
     const installments: Prisma.LoanInstallmentCreateManyInput[] = [];
 
-    for (let i = 0; i < numInstallments; i++) {
+    for (let i = 0; i < safeNum; i++) {
       // Calculate next due date
       currentDate = this.addPeriod(currentDate, frequency);
 
@@ -189,7 +234,7 @@ export class LoanService {
     const sanitizedData = this.sanitizeNumericFields(data);
     return this.prisma.loanApplication.update({
       where: { id },
-      data: sanitizedData,
+      data: sanitizedData as Prisma.LoanApplicationUpdateInput,
     });
   }
 
@@ -205,7 +250,7 @@ export class LoanService {
     const sanitizedData = this.sanitizeNumericFields(data);
     return this.prisma.loanApplication.update({
       where: { id },
-      data: sanitizedData,
+      data: sanitizedData as Prisma.LoanApplicationUpdateInput,
     });
   }
 
@@ -221,7 +266,7 @@ export class LoanService {
     const sanitizedData = this.sanitizeNumericFields(data);
     return this.prisma.loanApplication.update({
       where: { id },
-      data: sanitizedData,
+      data: sanitizedData as Prisma.LoanApplicationUpdateInput,
     });
   }
 
@@ -237,7 +282,7 @@ export class LoanService {
     const sanitizedData = this.sanitizeNumericFields(data);
     return this.prisma.loanApplication.update({
       where: { id },
-      data: sanitizedData,
+      data: sanitizedData as Prisma.LoanApplicationUpdateInput,
     });
   }
 
@@ -253,7 +298,7 @@ export class LoanService {
     const sanitizedData = this.sanitizeNumericFields(data);
     return this.prisma.loanApplication.update({
       where: { id },
-      data: sanitizedData,
+      data: sanitizedData as Prisma.LoanApplicationUpdateInput,
     });
   }
 
@@ -289,7 +334,10 @@ export class LoanService {
 
   async listAdmin(params: { status?: string; page?: number; limit?: number }) {
     const { status, page = 1, limit = 20 } = params;
-    const where = status ? { status: status as any } : {};
+    // @ts-expect-error - status from query params is validated at runtime
+    const where: Prisma.LoanApplicationWhereInput | undefined = status
+      ? { status }
+      : undefined;
     const [data, total] = await Promise.all([
       this.prisma.loanApplication.findMany({
         where,
@@ -358,6 +406,45 @@ export class LoanService {
   }
 
   /**
+   * Update loan repayment configuration (admin utility)
+   */
+  async updateLoanConfig(
+    id: string,
+    adminId: string,
+    data: {
+      interestRate?: number;
+      paymentFrequency?: PaymentFrequency;
+      numberOfInstallments?: number;
+      gracePeriodDays?: number;
+      lateFeePercentage?: number;
+    },
+  ) {
+    const loan = await this.prisma.loanApplication.findUnique({
+      where: { id },
+    });
+    if (!loan) throw new NotFoundException('Loan not found');
+
+    const updateData: Partial<Prisma.LoanApplicationUpdateInput> = {};
+    if (typeof data.interestRate === 'number')
+      updateData.interestRate = data.interestRate;
+    if (data.paymentFrequency)
+      updateData.paymentFrequency = data.paymentFrequency;
+    if (typeof data.numberOfInstallments === 'number')
+      updateData.numberOfInstallments = data.numberOfInstallments;
+    if (typeof data.gracePeriodDays === 'number')
+      updateData.gracePeriodDays = data.gracePeriodDays;
+    if (typeof data.lateFeePercentage === 'number')
+      updateData.lateFeePercentage = data.lateFeePercentage;
+
+    const updated = await this.prisma.loanApplication.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return updated;
+  }
+
+  /**
    * Review and approve/reject loan application
    */
   async review(
@@ -365,6 +452,13 @@ export class LoanService {
     adminId: string,
     action: 'APPROVED' | 'REJECTED',
     reason?: string,
+    approvalData?: {
+      interestRate?: number;
+      paymentFrequency?: PaymentFrequency;
+      installments?: number;
+      gracePeriod?: number;
+      lateFee?: number;
+    },
   ) {
     const loan = await this.prisma.loanApplication.findUnique({
       where: { id },
@@ -374,14 +468,30 @@ export class LoanService {
       throw new BadRequestException('Loan cannot be reviewed in current state');
     }
 
+    // When approving, persist loan repayment configuration if provided
+    const updateData: Partial<Prisma.LoanApplicationUpdateInput> = {
+      status: action,
+      reviewedAt: new Date(),
+      reviewedById: adminId,
+      rejectionReason: reason,
+    };
+
+    if (action === 'APPROVED' && approvalData) {
+      if (typeof approvalData.interestRate === 'number')
+        updateData.interestRate = approvalData.interestRate;
+      if (approvalData.paymentFrequency)
+        updateData.paymentFrequency = approvalData.paymentFrequency;
+      if (typeof approvalData.installments === 'number')
+        updateData.numberOfInstallments = approvalData.installments;
+      if (typeof approvalData.gracePeriod === 'number')
+        updateData.gracePeriodDays = approvalData.gracePeriod;
+      if (typeof approvalData.lateFee === 'number')
+        updateData.lateFeePercentage = approvalData.lateFee;
+    }
+
     const updated = await this.prisma.loanApplication.update({
       where: { id },
-      data: {
-        status: action,
-        reviewedAt: new Date(),
-        reviewedById: adminId,
-        rejectionReason: reason,
-      },
+      data: updateData,
     });
 
     const title = action === 'APPROVED' ? 'Loan Approved' : 'Loan Rejected';
@@ -625,119 +735,246 @@ export class LoanService {
    * Record a loan payment made by user (cash payment)
    * This does NOT deduct from passbook - it's a separate cash transaction
    */
+
   async recordLoanPayment(
     loanId: string,
-    installmentNumber: number,
     amountPaid: number,
     paymentDate: Date,
     adminId: string,
+    installmentNumber?: number,
   ) {
-    const installment = await this.prisma.loanInstallment.findUnique({
-      where: {
-        loanApplicationId_installmentNumber: {
-          loanApplicationId: loanId,
-          installmentNumber,
-        },
-      },
+    const loan = await this.prisma.loanApplication.findUnique({
+      where: { id: loanId },
       include: {
-        loanApplication: {
-          include: { user: true },
+        installments: {
+          orderBy: { installmentNumber: 'asc' },
         },
+        user: true,
       },
     });
 
-    if (!installment) {
-      throw new NotFoundException('Installment not found');
+    if (!loan) {
+      throw new NotFoundException('Loan not found');
     }
 
-    if (installment.isPaid) {
-      throw new ConflictException('Installment already paid');
-    }
+    const unpaidInstallments = loan.installments.filter((item) => !item.isPaid);
 
-    // Calculate penalty if payment is late
-    let penaltyAmount = 0;
-    let daysPastDue = 0;
-
-    const paymentDateTime = new Date(paymentDate);
-    if (paymentDateTime > installment.dueDate) {
-      daysPastDue = Math.floor(
-        (paymentDateTime.getTime() - installment.dueDate.getTime()) /
-          (1000 * 60 * 60 * 24),
+    if (installmentNumber) {
+      const installment = unpaidInstallments.find(
+        (item) => item.installmentNumber === installmentNumber,
       );
 
-      // Apply penalty only after grace period
-      const gracePeriod = installment.loanApplication.gracePeriodDays || 7;
-      if (daysPastDue > gracePeriod) {
-        const monthsLate = Math.ceil(daysPastDue / 30);
-        penaltyAmount =
-          installment.totalAmount *
-          ((installment.loanApplication.lateFeePercentage || 2) / 100) *
-          monthsLate;
-        penaltyAmount = Math.round(penaltyAmount * 100) / 100;
+      if (!installment) {
+        throw new NotFoundException('Installment not found');
       }
+
+      const installmentWithLoan = {
+        ...installment,
+        loanApplication: {
+          gracePeriodDays: loan.gracePeriodDays,
+          lateFeePercentage: loan.lateFeePercentage,
+        },
+      } as Prisma.LoanInstallmentGetPayload<{
+        include: { loanApplication: true };
+      }>;
+
+      const { penaltyAmount, totalDue } = this.calculateInstallmentDue(
+        installmentWithLoan,
+        paymentDate,
+      );
+
+      if (amountPaid < totalDue) {
+        throw new BadRequestException(`Insufficient. Due: ${totalDue}`);
+      }
+
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.loanInstallment.update({
+          where: { id: installment.id },
+          data: {
+            isPaid: true,
+            paidAmount: amountPaid,
+            paidDate: paymentDate,
+            penaltyAmount,
+          },
+        });
+
+        const currentOutstanding = loan.outstandingBalance ?? 0;
+        const newOutstanding = currentOutstanding - installment.principalAmount;
+
+        await tx.loanApplication.update({
+          where: { id: loanId },
+          data: {
+            outstandingBalance: Math.max(0, newOutstanding),
+            totalPaid: { increment: amountPaid },
+            status: newOutstanding <= 0.01 ? 'COMPLETED' : 'ACTIVE',
+          },
+        });
+
+        return {
+          success: true,
+          type: 'SINGLE_INSTALLMENT',
+          penaltyAmount,
+          totalPaid: amountPaid,
+          remainingBalance: Math.max(0, newOutstanding),
+        };
+      });
     }
 
-    const totalDue = installment.totalAmount + penaltyAmount;
+    const loanInterestRate = loan.interestRate ?? 0;
+    const remainingPrincipal = unpaidInstallments.reduce(
+      (sum, item) => sum + item.principalAmount,
+      0,
+    );
+    const scheduleInterest = unpaidInstallments.reduce(
+      (sum, item) => sum + item.interestAmount,
+      0,
+    );
+
+    const monthlyRate = loanInterestRate / 100 / 12;
+    let recalculatedInterest = 0;
+    let tempBalance = remainingPrincipal;
+
+    for (const item of unpaidInstallments) {
+      recalculatedInterest += tempBalance * monthlyRate;
+      tempBalance -= item.principalAmount;
+    }
+
+    recalculatedInterest = Math.round(recalculatedInterest * 100) / 100;
+    const totalDue = remainingPrincipal + recalculatedInterest;
+    const interestSavings = scheduleInterest - recalculatedInterest;
 
     if (amountPaid < totalDue) {
       throw new BadRequestException(
-        `Insufficient payment. Total due: NPR ${totalDue} (Base: NPR ${installment.totalAmount}, Penalty: NPR ${penaltyAmount}), but received: NPR ${amountPaid}`,
+        `Insufficient for early repayment. Due: ${totalDue}`,
       );
     }
 
-    this.logger.log(
-      `[recordLoanPayment] loanId=${loanId}, installment=${installmentNumber}, amount=${amountPaid}, penalty=${penaltyAmount}, daysPastDue=${daysPastDue}`,
-    );
-
     return await this.prisma.$transaction(async (tx) => {
-      // 1. Mark installment as paid
-      const updatedInstallment = await tx.loanInstallment.update({
-        where: { id: installment.id },
-        data: {
-          isPaid: true,
-          paidAmount: amountPaid,
-          paidDate: paymentDateTime,
-          penaltyAmount,
-          daysPastDue,
-        },
+      await tx.loanInstallment.updateMany({
+        where: { loanApplicationId: loanId, isPaid: false },
+        data: { isPaid: true, paidDate: paymentDate },
       });
-
-      // 2. Update loan application
-      const newOutstanding =
-        (installment.loanApplication.outstandingBalance ?? 0) -
-        installment.principalAmount;
-
-      const isCompleted = newOutstanding <= 0.01; // Handle floating point
 
       await tx.loanApplication.update({
         where: { id: loanId },
         data: {
-          outstandingBalance: Math.max(0, newOutstanding),
+          outstandingBalance: 0,
           totalPaid: { increment: amountPaid },
-          status: isCompleted ? 'COMPLETED' : 'ACTIVE',
+          status: 'COMPLETED',
         },
       });
 
-      this.logger.log(
-        `✅ Payment recorded: Installment #${installmentNumber}, Amount: NPR ${amountPaid}, Remaining balance: NPR ${Math.max(0, newOutstanding)}`,
-      );
-
-      // 3. Send notification to user
       await this.notif.send(
-        installment.loanApplication.userId,
+        loan.userId,
         'LOAN_STATUS',
-        'Payment Received',
-        `Your loan payment of NPR ${amountPaid} for installment #${installmentNumber} has been recorded.${penaltyAmount > 0 ? ` Late fee: NPR ${penaltyAmount}` : ''}${isCompleted ? ' Your loan is now fully paid!' : ''}`,
+        'Loan Fully Repaid',
+        `Loan repaid early! Interest savings: NPR ${interestSavings}`,
         true,
       );
 
       return {
         success: true,
-        installment: updatedInstallment,
-        penaltyAmount,
+        type: 'EARLY_REPAYMENT',
+        interestSavings,
         totalPaid: amountPaid,
-        remainingBalance: Math.max(0, newOutstanding),
-        isLoanCompleted: isCompleted,
+      };
+    });
+  }
+
+  /**
+   * Record multiple installments as paid (admin action)
+   */
+  async recordLoanPayments(
+    loanId: string,
+    installmentNumbers: number[],
+    paymentDate: Date,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    adminId: string,
+  ) {
+    const loan = await this.prisma.loanApplication.findUnique({
+      where: { id: loanId },
+      include: {
+        installments: { orderBy: { installmentNumber: 'asc' } },
+        user: true,
+      },
+    });
+
+    if (!loan) throw new NotFoundException('Loan not found');
+
+    const unpaid = loan.installments.filter(
+      (i) => !i.isPaid && installmentNumbers.includes(i.installmentNumber),
+    );
+    if (unpaid.length === 0) {
+      throw new BadRequestException('No matching unpaid installments found');
+    }
+
+    let totalPaid = 0;
+    let totalPrincipal = 0;
+
+    const updates = unpaid.map((installment) => {
+      const installmentWithLoan = {
+        ...installment,
+        loanApplication: {
+          gracePeriodDays: loan.gracePeriodDays,
+          lateFeePercentage: loan.lateFeePercentage,
+        },
+      };
+
+      const { penaltyAmount, totalDue } = this.calculateInstallmentDue(
+        installmentWithLoan as Parameters<
+          typeof this.calculateInstallmentDue
+        >[0],
+        paymentDate,
+      );
+      totalPaid += totalDue;
+      totalPrincipal += installment.principalAmount;
+
+      return {
+        id: installment.id,
+        paidAmount: totalDue,
+        paidDate: paymentDate,
+        penaltyAmount,
+      };
+    });
+
+    return await this.prisma.$transaction(async (tx) => {
+      for (const u of updates) {
+        await tx.loanInstallment.update({
+          where: { id: u.id },
+          data: {
+            isPaid: true,
+            paidAmount: u.paidAmount,
+            paidDate: u.paidDate,
+            penaltyAmount: u.penaltyAmount,
+          },
+        });
+      }
+
+      const currentOutstanding = loan.outstandingBalance ?? 0;
+      const newOutstanding = Math.max(0, currentOutstanding - totalPrincipal);
+
+      await tx.loanApplication.update({
+        where: { id: loanId },
+        data: {
+          outstandingBalance: newOutstanding,
+          totalPaid: { increment: totalPaid },
+          status: newOutstanding <= 0.01 ? 'COMPLETED' : 'ACTIVE',
+        },
+      });
+
+      await this.notif.send(
+        loan.userId,
+        'LOAN_STATUS',
+        'Payment Recorded',
+        `Recorded payment of NPR ${Math.round(totalPaid)} for loan ${loan.referenceNumber}`,
+        true,
+      );
+
+      return {
+        success: true,
+        totalPaid,
+        remainingBalance: newOutstanding,
+        installments: updates.length,
       };
     });
   }

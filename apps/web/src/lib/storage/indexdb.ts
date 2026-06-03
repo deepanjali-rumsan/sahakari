@@ -42,11 +42,11 @@ function now(): string {
 }
 
 export class IndexedDBContactStorage implements ContactStorage {
-  async list(): Promise<Contact[]> {
+  async list(): Promise<Array<Contact>> {
     const db = await openDb()
     const result = await tx(db, 'readonly', (s) => s.getAll())
     db.close()
-    const contacts = result as Contact[]
+    const contacts = result as Array<Contact>
     return contacts.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),

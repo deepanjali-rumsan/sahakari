@@ -2,12 +2,15 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { ChevronLeft, CheckCircle2, Printer } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, Printer } from 'lucide-react'
+import type {
+  ApprovalFormData} from '@/components/ApprovalFormModal';
 import {
-  ApprovalFormData,
   ApprovalFormModal,
 } from '@/components/ApprovalFormModal'
 import { DisbursementFormModal } from '@/components/DisbursementFormModal'
+import { RecordPaymentModal } from '@/components/RecordPaymentModal'
+import { formatStatusLabel, getStatusBadgeClass } from '@/lib/status'
 
 export const Route = createFileRoute('/_app/loans/$id')({
   component: LoanDetailPage,
@@ -26,19 +29,30 @@ function LoanDetailPage() {
   const qc = useQueryClient()
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const [showDisburseModal, setShowDisburseModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [approvalLoading, setApprovalLoading] = useState(false)
   const [disburseLoading, setDisburseLoading] = useState(false)
+  const [paymentLoading, setPaymentLoading] = useState(false)
   // Show modals based on status
   // Approval API
   const handleApprove = async (data: ApprovalFormData) => {
     setApprovalLoading(true)
     try {
-      void data
       const res = await fetch(
         `${apiUrl}/v1/admin/loans/${id}/review?action=APPROVED`,
         {
           method: 'PATCH',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            interestRate: data.interestRate,
+            paymentFrequency: data.paymentFrequency,
+            installments: data.installments,
+            gracePeriod: data.gracePeriod,
+            lateFee: data.lateFee,
+          }),
         },
       )
       if (!res.ok) throw new Error('Failed to approve')
@@ -87,6 +101,32 @@ function LoanDetailPage() {
     }
   }
 
+  const handleRecordPayment = async (payload: {
+    installmentNumbers: Array<number>
+    paymentDate: string
+  }) => {
+    setPaymentLoading(true)
+    try {
+      const res = await fetch(`${apiUrl}/v1/admin/loans/${id}/record-payment`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error('Failed to record payment')
+
+      qc.invalidateQueries({ queryKey: ['admin-loan', id] })
+      setShowPaymentModal(false)
+    } catch (e: any) {
+      // handle error (optional)
+    } finally {
+      setPaymentLoading(false)
+    }
+  }
+
   const {
     data: loan,
     isLoading,
@@ -106,16 +146,11 @@ function LoanDetailPage() {
     enabled: !!token,
   })
 
-  const statusColors: Record<string, string> = {
-    APPROVED: 'bg-green-100 text-green-700',
-    SUBMITTED: 'bg-blue-100 text-blue-700',
-    UNDER_REVIEW: 'bg-orange-100 text-orange-700',
-    REJECTED: 'bg-red-100 text-red-700',
-    DRAFT: 'bg-gray-100 text-gray-600',
-  }
-
   const shouldShowApproval = loan?.status === 'SUBMITTED'
   const shouldShowDisburse = loan?.status === 'APPROVED' && !loan?.disbursed
+  const shouldShowPayment =
+    !!loan?.isDisbursed &&
+    (loan?.installments ?? []).some((item: any) => !item.isPaid)
 
   if (isLoading)
     return <div className="p-8 text-center text-gray-400">Loading...</div>
@@ -123,7 +158,7 @@ function LoanDetailPage() {
     return (
       <div className="p-8 text-center">
         <p className="text-red-500">
-          Error loading loan: {(error as Error).message}
+          Error loading loan: {(error).message}
         </p>
         <button
           onClick={() => navigate({ to: '/loans' })}
@@ -187,6 +222,14 @@ function LoanDetailPage() {
           <ChevronLeft size={16} /> Back to Loans
         </button>
         <div className="flex items-center gap-3">
+          {shouldShowPayment && (
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="flex items-center gap-2 rounded-lg border border-blue-600 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 shadow-sm"
+            >
+              <CheckCircle2 size={16} /> Record Payment
+            </button>
+          )}
           <button
             onClick={handlePrint}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-md"
@@ -194,9 +237,9 @@ function LoanDetailPage() {
             <Printer size={16} /> Print
           </button>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-medium ${statusColors[loan.status] ?? 'bg-gray-100'}`}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(loan.status)}`}
           >
-            {loan.status?.replace('_', ' ')}
+            {formatStatusLabel(loan.status)}
           </span>
         </div>
       </div>
@@ -767,6 +810,13 @@ function LoanDetailPage() {
         loan={loan}
         onDisburse={handleDisburse}
         loading={disburseLoading}
+      />
+      <RecordPaymentModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        loan={loan}
+        onSubmit={handleRecordPayment}
+        loading={paymentLoading}
       />
     </div>
   )

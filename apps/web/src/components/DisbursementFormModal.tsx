@@ -26,19 +26,6 @@ export const DisbursementFormModal: React.FC<DisbursementFormModalProps> = ({
 
   // Schedule preview (first 3 installments)
   const today = new Date()
-  const freqMap = { MONTHLY: 1, QUARTERLY: 3, ANNUAL: 12 }
-  const freq = freqMap[loan.paymentFrequency || 'MONTHLY'] || 1
-  const schedule = Array.from({ length: 3 }, (_, i) => {
-    const due = new Date(today)
-    due.setMonth(today.getMonth() + freq * i + (loan.gracePeriod || 0) / 30)
-    return {
-      number: i + 1,
-      dueDate: formatDate(due),
-      amount: Math.round(
-        (loan.approvedAmount || loan.loanAmount) / (loan.installments || 12),
-      ),
-    }
-  })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -83,7 +70,7 @@ export const DisbursementFormModal: React.FC<DisbursementFormModalProps> = ({
         <div className="mb-3 text-sm">
           <b>Disbursement Date:</b> {formatDate(today)}
         </div>
-        <div className="mb-3">
+        {/* <div className="mb-3">
           <b>Schedule Preview:</b>
           <table className="w-full text-xs mt-1 border">
             <thead>
@@ -105,7 +92,7 @@ export const DisbursementFormModal: React.FC<DisbursementFormModalProps> = ({
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
         <div className="flex items-center gap-2 mb-4">
           <input
             type="checkbox"

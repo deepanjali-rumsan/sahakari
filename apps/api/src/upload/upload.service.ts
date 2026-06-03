@@ -64,7 +64,7 @@ export class UploadService {
     return fileExt || 'bin';
   }
 
-  private async saveLocally(buffer: Buffer, filename: string): Promise<string> {
+  private saveLocally(buffer: Buffer, filename: string): string {
     const filePath = join(this.localUploadPath, filename);
     writeFileSync(filePath, buffer);
     return `${this.apiBaseUrl}/v1/uploads/${filename}`;

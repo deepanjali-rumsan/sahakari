@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Upload, Loader2 } from 'lucide-react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Loader2, Upload } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 
 const apiUrl = import.meta.env['VITE_API_URL'] ?? ''
@@ -121,7 +121,7 @@ export function CooperativeRegistrationForm() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   // Fetch provinces
-  const { data: provinces = [] } = useQuery<Province[]>({
+  const { data: provinces = [] } = useQuery<Array<Province>>({
     queryKey: ['provinces'],
     queryFn: async () => {
       const res = await fetch(`${apiUrl}/v1/geo/provinces`)
@@ -130,7 +130,7 @@ export function CooperativeRegistrationForm() {
   })
 
   // Fetch districts based on province
-  const { data: districts = [] } = useQuery<District[]>({
+  const { data: districts = [] } = useQuery<Array<District>>({
     queryKey: ['districts', formData.provinceId],
     queryFn: async () => {
       if (!formData.provinceId) return []
@@ -143,7 +143,7 @@ export function CooperativeRegistrationForm() {
   })
 
   // Fetch municipalities based on district
-  const { data: municipalities = [] } = useQuery<Municipality[]>({
+  const { data: municipalities = [] } = useQuery<Array<Municipality>>({
     queryKey: ['municipalities', formData.districtId],
     queryFn: async () => {
       if (!formData.districtId) return []
@@ -158,14 +158,14 @@ export function CooperativeRegistrationForm() {
   // Upload logo mutation
   const uploadLogoMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData()
-      formData.append('file', file)
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', file)
       const res = await fetch(`${apiUrl}/v1/upload`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: formData,
+        body: uploadFormData,
       })
       const data = await res.json()
       return data.url
@@ -217,7 +217,7 @@ export function CooperativeRegistrationForm() {
         const nextErrors: Partial<Record<FormField, string>> = {}
 
         for (const [field, messages] of Object.entries(fieldErrors)) {
-          if (!messages?.[0]) continue
+          if (!messages[0]) continue
           nextErrors[field as FormField] = messages[0]
         }
 
@@ -285,15 +285,13 @@ export function CooperativeRegistrationForm() {
 
     // Reset dependent fields when parent changes
     const fieldSchema = formSchema.shape[fieldName]
-    if (fieldSchema) {
-      const result = fieldSchema.safeParse(value)
-      setErrors((prev) => ({
-        ...prev,
-        [fieldName]: result.success
-          ? undefined
-          : result.error.issues[0]?.message || 'Invalid value',
-      }))
-    }
+    const result = fieldSchema.safeParse(value)
+    setErrors((prev) => ({
+      ...prev,
+      [fieldName]: result.success
+        ? undefined
+        : result.error.issues[0]?.message || 'Invalid value',
+    }))
 
     if (name === 'provinceId') {
       setErrors((prev) => ({

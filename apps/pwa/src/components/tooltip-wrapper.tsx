@@ -1,11 +1,11 @@
-import { ReactNode } from "react";
-
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@rs/ui/tooltip";
+import type { ReactNode } from "react";
+
 
 interface TooltipWrapperProps {
   tip: string;
@@ -18,7 +18,7 @@ export default function TooltipWrapper({
   children,
   disable = false,
 }: TooltipWrapperProps) {
-  if (disable || !tip?.trim()) {
+  if (disable || !tip.trim()) {
     return <>{children}</>;
   }
   return (

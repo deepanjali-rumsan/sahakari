@@ -1,6 +1,5 @@
 import * as React from 'react'
 
-import { Example, ExampleWrapper } from '@/components/example'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,35 +60,36 @@ import {
 } from '@rs/ui/select'
 import { Textarea } from '@rs/ui/textarea'
 import {
-  PlusIcon,
+  BellIcon,
   BluetoothIcon,
-  MoreVerticalIcon,
-  FileIcon,
-  FolderIcon,
-  FolderOpenIcon,
-  FileCodeIcon,
-  MoreHorizontalIcon,
-  FolderSearchIcon,
-  SaveIcon,
+  CreditCardIcon,
   DownloadIcon,
   EyeIcon,
-  LayoutIcon,
-  PaletteIcon,
-  SunIcon,
-  MoonIcon,
-  MonitorIcon,
-  UserIcon,
-  CreditCardIcon,
-  SettingsIcon,
+  FileCodeIcon,
+  FileIcon,
+  FileTextIcon,
+  FolderIcon,
+  FolderOpenIcon,
+  FolderSearchIcon,
+  HelpCircleIcon,
   KeyboardIcon,
   LanguagesIcon,
-  BellIcon,
-  MailIcon,
-  ShieldIcon,
-  HelpCircleIcon,
-  FileTextIcon,
+  LayoutIcon,
   LogOutIcon,
+  MailIcon,
+  MonitorIcon,
+  MoonIcon,
+  MoreHorizontalIcon,
+  MoreVerticalIcon,
+  PaletteIcon,
+  PlusIcon,
+  SaveIcon,
+  SettingsIcon,
+  ShieldIcon,
+  SunIcon,
+  UserIcon,
 } from 'lucide-react'
+import { Example, ExampleWrapper } from '@/components/example'
 
 export function ComponentExample() {
   return (

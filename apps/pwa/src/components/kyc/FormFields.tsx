@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import type { FieldApi } from "@tanstack/react-form";
+import type { ReactNode } from "react";
 
 // Local Input component matching basic-info.tsx style
 function Input({

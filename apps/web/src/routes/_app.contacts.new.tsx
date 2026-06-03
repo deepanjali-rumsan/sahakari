@@ -8,7 +8,13 @@ export const Route = createFileRoute('/_app/contacts/new')({
   component: NewContact,
 })
 
-const TAGS: Array<ContactTag> = ['Client', 'Lead', 'Partner', 'Vendor', 'Archived']
+const TAGS: Array<ContactTag> = [
+  'Client',
+  'Lead',
+  'Partner',
+  'Vendor',
+  'Archived',
+]
 const STATUSES: Array<ContactStatus> = ['Active', 'Inactive']
 
 function NewContact() {
@@ -159,7 +165,7 @@ function NewContact() {
 
             {createMutation.error && (
               <p className="text-sm text-red-500">
-                {(createMutation.error).message}
+                {createMutation.error.message}
               </p>
             )}
 

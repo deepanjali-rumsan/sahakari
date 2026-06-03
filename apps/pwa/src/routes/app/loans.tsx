@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  createFileRoute,
   Link,
   Outlet,
-  createFileRoute,
   useRouterState,
 } from "@tanstack/react-router";
 

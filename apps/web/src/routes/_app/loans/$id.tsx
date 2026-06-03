@@ -3,11 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { CheckCircle2, ChevronLeft, Printer } from 'lucide-react'
-import type {
-  ApprovalFormData} from '@/components/ApprovalFormModal';
-import {
-  ApprovalFormModal,
-} from '@/components/ApprovalFormModal'
+import type { ApprovalFormData } from '@/components/ApprovalFormModal'
+import { ApprovalFormModal } from '@/components/ApprovalFormModal'
 import { DisbursementFormModal } from '@/components/DisbursementFormModal'
 import { RecordPaymentModal } from '@/components/RecordPaymentModal'
 import { formatStatusLabel, getStatusBadgeClass } from '@/lib/status'
@@ -157,9 +154,7 @@ function LoanDetailPage() {
   if (error)
     return (
       <div className="p-8 text-center">
-        <p className="text-red-500">
-          Error loading loan: {(error).message}
-        </p>
+        <p className="text-red-500">Error loading loan: {error.message}</p>
         <button
           onClick={() => navigate({ to: '/loans' })}
           className="mt-4 text-blue-600 hover:underline"

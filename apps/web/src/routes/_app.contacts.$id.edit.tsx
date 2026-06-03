@@ -8,7 +8,13 @@ export const Route = createFileRoute('/_app/contacts/$id/edit')({
   component: EditContact,
 })
 
-const TAGS: Array<ContactTag> = ['Client', 'Lead', 'Partner', 'Vendor', 'Archived']
+const TAGS: Array<ContactTag> = [
+  'Client',
+  'Lead',
+  'Partner',
+  'Vendor',
+  'Archived',
+]
 const STATUSES: Array<ContactStatus> = ['Active', 'Inactive']
 
 function EditContact() {
@@ -190,7 +196,7 @@ function EditContact() {
 
             {updateMutation.error && (
               <p className="text-sm text-red-500">
-                {(updateMutation.error).message}
+                {updateMutation.error.message}
               </p>
             )}
 

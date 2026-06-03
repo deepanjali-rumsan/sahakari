@@ -1,11 +1,11 @@
+import type { ReactNode } from "react";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@rs/ui/tooltip";
-import type { ReactNode } from "react";
-
 
 interface TooltipWrapperProps {
   tip: string;

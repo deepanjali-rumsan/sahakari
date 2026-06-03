@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 
 import { createLoanApi } from "@rs/sdk";
@@ -94,7 +94,6 @@ function LoanDetailPage() {
     },
   };
 
-  const tabs = ["Details", "Documents"];
   const installments: Array<LoanInstallment> =
     (loan as any)?.installments ?? [];
   const paidInstallments = installments.filter((item) => item.isPaid);
@@ -108,11 +107,9 @@ function LoanDetailPage() {
     (sum, item) => sum + (item.totalAmount || 0),
     0,
   );
-  const totalPenaltyAmount = paidInstallments.reduce(
-    (sum, item) => sum + (item.penaltyAmount || 0),
-    0,
-  );
   const [activeTab, setActiveTab] = useState(0);
+  const hasInstallments = installments.length > 0;
+  const hasUnpaidInstallments = unpaidInstallments.length > 0;
 
   if (isLoading) {
     return (
@@ -292,13 +289,13 @@ function LoanDetailPage() {
                 </div>
               </div>
             )}
-            {installments.length === 0 ? (
+            {!hasInstallments ? (
               <div className="bg-primary-container rounded-xl px-5 py-4">
                 <p className="text-on-primary-container text-sm font-semibold">
                   No installment schedule is available yet.
                 </p>
               </div>
-            ) : !nextUnpaidInstallment ? (
+            ) : !hasUnpaidInstallments ? (
               <div className="bg-primary-container rounded-xl px-5 py-4">
                 <p className="text-on-primary-container text-sm font-semibold">
                   All installments are paid.
